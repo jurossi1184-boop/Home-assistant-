@@ -167,7 +167,7 @@ class PacGlassCard extends HTMLElement{
 .back{display:inline-flex;align-items:center;gap:8px;padding:10px 18px 10px 14px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);font-size:14px;font-weight:600;color:var(--txt2);cursor:pointer;user-select:none}
 .back:active{transform:scale(.96)}
 .hero{position:relative;background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px}
-.hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;min-height:36px}
 .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:10px}
 .hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:end}
 .stat{white-space:nowrap;min-width:0}
