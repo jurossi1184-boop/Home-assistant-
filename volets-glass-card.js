@@ -127,7 +127,7 @@ class VoletsGlassCard extends HTMLElement{
     else actTxt=n>=tot?'Tout ouvert':(n<=0?'Tout ferm\u00e9':n+' ouvert'+(n>1?'s':'')+' sur '+tot);
     if(!autoOn)actTxt='Pilotage coup\u00e9 \u00b7 '+actTxt;
     return `<div class='hero'>
-      <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Volets<span class='profil' data-act='profil'>${this._s(c.profil)||''}\u00a0\u00b7\u00a0max pr\u00e9vu ${this._n(this._s(c.prevMax))}\u00b0</span></div><span class='gear' data-act='sopen'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M4 7h9.4M18.6 7H20M4 12h3.4M12.6 12H20M4 17h11.4'/><circle cx='16' cy='7' r='2.3'/><circle cx='10' cy='12' r='2.3'/><circle cx='18' cy='17' r='2.3'/></svg></span></div>
+      <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Volets<span class='profil'>${this._s(c.profil)||''}\u00a0\u00b7\u00a0max pr\u00e9vu ${this._n(this._s(c.prevMax))}\u00b0</span></div><span class='gear' data-act='sopen'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M4 7h9.4M18.6 7H20M4 12h3.4M12.6 12H20M4 17h11.4'/><circle cx='16' cy='7' r='2.3'/><circle cx='10' cy='12' r='2.3'/><circle cx='18' cy='17' r='2.3'/></svg></span></div>
       <div class='hStats'>
         <div class='stat'><div class='sv'>${this._n(this._s(c.indice))}<span class='svDim'>\u2009%</span></div><div class='sl'>Indice surchauffe</div></div>
         <div class='stat'><div class='sv'>${n}<span class='svDim'>/${tot}</span></div><div class='sl'>Ouverts</div></div>
@@ -203,7 +203,6 @@ class VoletsGlassCard extends HTMLElement{
     if(act==='sclose'){this._sheet=false;this._last='';this._render();return;}
     if(act==='rclose'){this._open=null;this._pend={};this._last='';this._render();return;}
     if(act==='chip'){e.stopPropagation();h.callService('input_boolean','toggle',{entity_id:t.dataset.e});return;}
-    if(act==='profil'){e.stopPropagation();h.callService('input_select','select_next',{entity_id:c.profil});return;}
     if(act==='pilot'){e.stopPropagation();const aOn=this._s(c.auto)==='on';const mans=this._rooms().filter(r=>r.manual&&this._s(r.manual)==='on').map(r=>r.manual);if(!aOn){h.callService('input_boolean','turn_on',{entity_id:c.auto});return;}if(mans.length){h.callService('input_boolean','turn_off',{entity_id:mans});return;}h.callService('input_boolean','turn_off',{entity_id:c.auto});return;}
     if(act==='goTarget'){e.stopPropagation();const rr=this._rooms().find(x=>x.key===t.dataset.k);if(!rr)return;const tgt=this._targetFor(rr);if(tgt==null)return;this._pend[rr.key]=tgt;h.callService('cover','set_cover_position',{entity_id:rr.cover,position:tgt});clearTimeout(this._tmr[rr.key]);this._tmr[rr.key]=setTimeout(()=>{delete this._pend[rr.key];this._last='';this._render();},15000);this._last='';this._render();return;}
     if(act==='open'){if(e.target.closest("[data-act='quick']"))return;this._open=t.dataset.k;this._last='';this._render();return;}
@@ -325,8 +324,7 @@ class VoletsGlassCard extends HTMLElement{
 .room.dim .pastille{opacity:.5}
 .room.on .pastille{background:rgba(62,195,247,.16);color:#0a7eb8}
 .pwrGrp{display:flex;gap:6px}
-.profil{font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:11px;background:rgba(255,255,255,.1);border:1px solid var(--stroke);color:#f4f5ff;text-transform:none;white-space:nowrap;cursor:pointer;user-select:none}
-.profil:active{transform:scale(.94);background:rgba(255,255,255,.18)}
+.profil{font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:11px;background:rgba(255,255,255,.1);border:1px solid var(--stroke);color:#f4f5ff;text-transform:none;white-space:nowrap}
 .svDim{font-size:20px;font-weight:600;color:var(--txt2)}
 .chip.ro{cursor:default;opacity:.75}
 .chip.ro.on{opacity:1}
