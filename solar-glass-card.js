@@ -256,7 +256,6 @@ class SolarGlassCard extends HTMLElement{
     const sheets=this._open?this._sheetRoomHtml():(this._sheet?this._setSheetHtml():'');
     this.shadowRoot.innerHTML=`<style>${this._css()}</style>
     <div class='wrap'>
-      <div class='top'><span class='back' data-act='back'>‹&nbsp;Accueil</span></div>
       ${this._heroHtml()}
       ${this._ribbonHtml()}
       <div class='lowerCols'>

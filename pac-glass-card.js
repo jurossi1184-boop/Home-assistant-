@@ -126,7 +126,6 @@ class PacGlassCard extends HTMLElement{
     const sheets=this._open?this._sheetRoomHtml():'';
     this.shadowRoot.innerHTML=`<style>${this._css()}</style>
     <div class='wrap'>
-      <div class='top'><span class='back' data-act='back'>\u2039&nbsp;Accueil</span></div>
       ${this._heroHtml()}
       <div class='secTitle'>Circuits</div>
       <div class='grid'>${c.rooms.map(r=>this._tile(r)).join('')}</div>

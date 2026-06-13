@@ -346,7 +346,6 @@ class ClimGlassCard extends HTMLElement{
     const sy=prevSc?prevSc.scrollTop:0;
     const psc=this._scroller();const py=psc?psc.scrollTop:0;
     this.shadowRoot.innerHTML=`<style>${this._css()}</style><div class='wrap'>
-      <div class='top'><span class='back' data-act='back'>\u2039&nbsp;Accueil</span></div>
       ${this._alertsHtml()}
       ${this._heroHtml()}
       <div class='secTitle'>Pi\u00e8ces</div>
