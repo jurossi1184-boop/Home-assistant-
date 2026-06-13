@@ -1,4 +1,4 @@
-/* volets-glass-card v3 — vue Volets Liquid Glass (soeur de clim-glass-card). Affiche la cible cerveau par volet, _why complet (heat_mode/anticipation/coucher/garde-fou/soft), profil cliquable, salon_devant et parents marqués non pilotés. */
+/* volets-glass-card v4 — statut cerveau intelligent (actif/en pause avec horaire), badge soleil (sud/ouest/horizon), scènes rapides (jour/nuit/cinéma/coucher enfants), animation fluide pastille via Web Animations API. */
 class VoletsGlassCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._sheet=false;this._last='';this._pend={};this._tmr={};}
   setConfig(cfg){
@@ -85,7 +85,9 @@ class VoletsGlassCard extends HTMLElement{
   _targetFor(r){if(!r.piloted||!r.targetType)return null;const b=this._brainVars();return b[r.targetType+'_target'];}
   _fp(){const ids=[this._c.indice,this._c.ext,this._c.profil,this._c.prevMax,this._c.fSej,this._c.fEta,this._c.fConf,this._c.ph,this._c.pb,this._c.gf,this._c.ant,this._c.couv,this._c.dpv,this._c.dtemp,this._c.posC];
     ids.push(this._c.auto,this._c.cielCouvert);this._rooms().forEach(r=>{ids.push(r.cover);if(r.manual)ids.push(r.manual);});
-    return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.current_position!=null?st.attributes.current_position:''):'x';}).join(';')+(this._open||'')+(this._sheet?'S':'')+JSON.stringify(this._pend);}
+    const sunSt=this._h&&this._h.states[this._c.sun];
+    const sunFp=sunSt?(sunSt.state+'|'+Math.floor((parseFloat(sunSt.attributes.azimuth)||0)/10)+'|'+Math.floor((parseFloat(sunSt.attributes.elevation)||0))):'';
+    return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.current_position!=null?st.attributes.current_position:''):'x';}).join(';')+'|sun:'+sunFp+(this._open||'')+(this._sheet?'S':'')+JSON.stringify(this._pend);}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
   _why(r){const c=this._c;
     if(r.manual&&this._s(r.manual)==='on')return 'Mode manuel \u2014 le cerveau ne touche pas ce volet';
@@ -112,10 +114,46 @@ class VoletsGlassCard extends HTMLElement{
     const cls=na?'room na':(shading||moving?'room on':(closed?'room dim':'room'));
     const fill=na?0:Math.max(0,Math.min(100,p));
     return `<div class='${cls}' data-act='open' data-k='${r.key}'>
-      <div class='rTop'><span class='pastille ${shading?'pOn':''}'><span class='pFill' style='height:${fill}%'></span>${this._icWin()}</span>
+      <div class='rTop'><span class='pastille ${shading?'pOn':''}'><span class='pFill' data-fk='${r.key}' style='height:${fill}%'></span>${this._icWin()}</span>
       <span class='pwrGrp'>${moving?`<span class='pwr' data-act='quick' data-k='${r.key}' data-m='stop'><svg viewBox='0 0 24 24' width='17' height='17' fill='currentColor' stroke='currentColor' stroke-width='2.1' stroke-linejoin='round'><rect x='7' y='7' width='10' height='10' rx='2'/></svg></span>`:(shading?`<span class='pwr' data-act='quick' data-k='${r.key}' data-m='up'><svg viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'><path d='M12 19V6M6.5 11.5 12 6l5.5 5.5'/></svg></span><span class='pwr' data-act='quick' data-k='${r.key}' data-m='down'><svg viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5v13M6.5 12.5 12 18l5.5-5.5'/></svg></span>`:`<span class='pwr' data-act='quick' data-k='${r.key}' data-m='${closed?"up":"down"}'><svg viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'>${closed?"<path d='M12 19V6M6.5 11.5 12 6l5.5 5.5'/>":"<path d='M12 5v13M6.5 12.5 12 18l5.5-5.5'/>"}</svg></span>`)}</span></div>
       <div class='rName'>${r.name}</div>
       <div class='rSub'>${this._statusTxt(r)}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div></div>`;}
+  _pilotChip(){const c=this._c;
+    const aOn=this._s(c.auto)==='on';
+    const mans=this._rooms().filter(r=>r.manual&&this._s(r.manual)==='on').length;
+    if(!aOn)return `<div class='chip' data-act='pilot'><span class='dot'></span>Pilotage coupé · toucher pour reprendre</div>`;
+    const now=new Date();const hh=now.getHours();
+    const elev=parseFloat(this._a(c.sun,'elevation'));
+    let status;
+    if(hh<9)status='En pause · reprend à 9h';
+    else if(!isNaN(elev)&&elev<=12){
+      if(hh>=18)status='En pause · soleil descendu sous 12° · reprend demain à 9h';
+      else status='En pause · soleil sous 12° · reprend dès que ça monte';
+    } else {
+      const ns=this._a(c.sun,'next_setting');
+      if(ns){const d=new Date(ns);const hs=String(d.getHours()).padStart(2,'0');const ms=String(d.getMinutes()).padStart(2,'0');status=`Cerveau actif · jusqu'au coucher (~${hs}:${ms})`;}
+      else status='Cerveau actif';
+    }
+    if(mans>0)status+=` · ${mans} manuel${mans>1?'s':''}`;
+    const cls=mans>0?'chip on part':'chip on';
+    return `<div class='${cls}' data-act='pilot'><span class='dot'></span>${status}</div>`;}
+  _sunBadge(){const c=this._c;
+    const elev=parseFloat(this._a(c.sun,'elevation'));
+    const az=parseFloat(this._a(c.sun,'azimuth'));
+    if(isNaN(elev))return '';
+    if(elev<=0)return '🌑 Soleil sous l\'horizon';
+    if(elev<=12)return '🌅 Aube/crépuscule · façades libres';
+    if(isNaN(az))return '☀️ Soleil levé';
+    if(az>=90&&az<=189)return '☀️ Soleil sur la façade sud';
+    if(az>=190&&az<=245)return '☀️ Soleil sud + ouest';
+    if(az>=246&&az<360)return '🌇 Soleil sur la façade ouest';
+    return '🌅 Soleil à l\'est · façades libres';}
+  _scenesHtml(){return `<div class='scenes'>
+    <div class='scene' data-act='scene' data-s='day'><span class='scIc'>☀️</span>Jour</div>
+    <div class='scene' data-act='scene' data-s='night'><span class='scIc'>🌙</span>Nuit</div>
+    <div class='scene' data-act='scene' data-s='cinema'><span class='scIc'>🎬</span>Cinéma</div>
+    <div class='scene' data-act='scene' data-s='kids'><span class='scIc'>👶</span>Coucher enfants</div>
+  </div>`;}
   _heroHtml(){const c=this._c;
     const sejF=this._s(c.fConf)==='on',etaF=this._s(c.fEta)==='on';
     const flags=[[sejF,sejF?'S\u00e9jour ombrag\u00e9':'S\u00e9jour libre'],[etaF,etaF?'\u00c9tage ombrag\u00e9':'\u00c9tage libre']];
@@ -134,8 +172,9 @@ class VoletsGlassCard extends HTMLElement{
         <div class='stat'><div class='sv'>${n}<span class='svDim'>/${tot}</span></div><div class='sl'>Ouverts</div></div>
         <div class='stat out'><div class='sv'>${this._n(this._s(c.ext))}\u00b0</div><div class='sl'>Ext\u00e9rieur</div></div>
       </div>
-      <div class='sub'>${actTxt}</div></div>
-      <div class='heroRow'>${(()=>{const mans=this._rooms().filter(r=>r.manual&&this._s(r.manual)==='on');const aOn=this._s(c.auto)==='on';if(!aOn)return `<div class='chip' data-act='pilot'><span class='dot'></span>Pilotage coup\u00e9</div>`;if(mans.length)return `<div class='chip on part' data-act='pilot'><span class='dot'></span>Pilotage partiel \u00b7 ${mans.length} manuel${mans.length>1?'s':''}</div>`;return `<div class='chip on' data-act='pilot'><span class='dot'></span>Pilotage auto</div>`;})()}${flags.map(f=>`<div class='chip ro ${f[0]?'on':''}'><span class='dot'></span>${f[1]}</div>`).join('')}</div>
+      <div class='sub'>${actTxt}</div>
+      <div class='subSun'>${this._sunBadge()}</div></div>
+      <div class='heroRow'>${this._pilotChip()}${flags.map(f=>`<div class='chip ro ${f[0]?'on':''}'><span class='dot'></span>${f[1]}</div>`).join('')}</div>
       </div>`;}
   _sheetRoomHtml(){const r=this._rooms().find(x=>x.key===this._open);if(!r)return'';
     const p=this._pos(r);const posC=this._n(this._s(this._c.posC));
@@ -190,12 +229,22 @@ class VoletsGlassCard extends HTMLElement{
     <div class='wrap'>
       <div class='top'><span class='back' data-act='back'>\u2039&nbsp;Accueil</span></div>
       ${this._heroHtml()}
+      ${this._scenesHtml()}
       ${this._secHeader('RDC',c.grpRdc,'rdc')}
       <div class='grid'>${c.grpRdc.map(r=>this._tile(r)).join('')}</div>
       ${this._secHeader('\u00c9tage',c.grpEtage,'etage')}
       <div class='grid'>${c.grpEtage.map(r=>this._tile(r)).join('')}</div>
     </div>${sheets}`;
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
+    const cache=this._prevFills||{};
+    this.shadowRoot.querySelectorAll('.pFill[data-fk]').forEach(el=>{
+      const k=el.dataset.fk;const target=el.style.height;
+      if(cache[k]!=null&&cache[k]!==target){
+        try{el.animate([{height:cache[k]},{height:target}],{duration:900,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});}catch(_){}
+      }
+      cache[k]=target;
+    });
+    this._prevFills=cache;
     const sc=this.shadowRoot.querySelector('.sheetScroll');if(sc&&this._scTop)sc.scrollTop=this._scTop;
     if(sc)sc.addEventListener('scroll',()=>{this._scTop=sc.scrollTop;});}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
@@ -205,6 +254,7 @@ class VoletsGlassCard extends HTMLElement{
     if(act==='rclose'){this._open=null;this._pend={};this._last='';this._render();return;}
     if(act==='chip'){e.stopPropagation();h.callService('input_boolean','toggle',{entity_id:t.dataset.e});return;}
     if(act==='groupAll'){e.stopPropagation();const grp=t.dataset.g==='rdc'?c.grpRdc:c.grpEtage;const ids=grp.map(r=>r.cover);const svc=t.dataset.m==='open'?'open_cover':'close_cover';h.callService('cover',svc,{entity_id:ids});return;}
+    if(act==='scene'){e.stopPropagation();const s=t.dataset.s;const allIds=this._rooms().map(r=>r.cover);const sejourIds=c.grpRdc.map(r=>r.cover);const kidsIds=c.grpEtage.filter(r=>r.key==='louise'||r.key==='leandre').map(r=>r.cover);if(s==='day')h.callService('cover','open_cover',{entity_id:allIds});else if(s==='night')h.callService('cover','close_cover',{entity_id:allIds});else if(s==='cinema')h.callService('cover','close_cover',{entity_id:sejourIds});else if(s==='kids')h.callService('cover','close_cover',{entity_id:kidsIds});return;}
     if(act==='pilot'){e.stopPropagation();const aOn=this._s(c.auto)==='on';const mans=this._rooms().filter(r=>r.manual&&this._s(r.manual)==='on').map(r=>r.manual);if(!aOn){h.callService('input_boolean','turn_on',{entity_id:c.auto});return;}if(mans.length){h.callService('input_boolean','turn_off',{entity_id:mans});return;}h.callService('input_boolean','turn_off',{entity_id:c.auto});return;}
     if(act==='goTarget'){e.stopPropagation();const rr=this._rooms().find(x=>x.key===t.dataset.k);if(!rr)return;const tgt=this._targetFor(rr);if(tgt==null)return;this._pend[rr.key]=tgt;h.callService('cover','set_cover_position',{entity_id:rr.cover,position:tgt});clearTimeout(this._tmr[rr.key]);this._tmr[rr.key]=setTimeout(()=>{delete this._pend[rr.key];this._last='';this._render();},15000);this._last='';this._render();return;}
     if(act==='open'){if(e.target.closest("[data-act='quick']"))return;this._open=t.dataset.k;this._last='';this._render();return;}
@@ -245,6 +295,11 @@ class VoletsGlassCard extends HTMLElement{
 .sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
 .sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.subSun{margin-top:4px;font-size:12.5px;color:var(--txt2);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scenes{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+.scene{flex:1 1 130px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-size:14px;font-weight:600;color:#f4f5ff;cursor:pointer;user-select:none;transition:.15s;white-space:nowrap}
+.scene:active{transform:scale(.96);background:rgba(255,255,255,.18)}
+.scIc{font-size:16px;line-height:1}
 .heroRow{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .chip{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 10px;border-radius:18px;font-size:14px;font-weight:600;background:rgba(255,255,255,.07);border:1px solid var(--stroke);color:var(--txt2);cursor:pointer;transition:.25s;user-select:none;white-space:nowrap}
 .chip.on{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.95);color:#0a7eb8;font-weight:700;box-shadow:0 6px 20px rgba(10,20,60,.22)}
@@ -326,7 +381,7 @@ class VoletsGlassCard extends HTMLElement{
 /* === sp\u00e9cifique volets === */
 .grid+.secTitle,.grid+.secHead{margin-top:22px}
 .pastille{position:relative;overflow:hidden;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:#cfe9ff;flex-shrink:0}
-.pFill{position:absolute;left:0;right:0;bottom:0;background:rgba(62,195,247,.28);transition:height .6s}
+.pFill{position:absolute;left:0;right:0;bottom:0;background:rgba(62,195,247,.28);transition:height .9s cubic-bezier(.4,0,.2,1)}
 .room.on .pFill{background:rgba(10,126,184,.16)}
 .pastille svg{position:relative;z-index:1}
 .pastille.pOn{background:rgba(62,195,247,.22);color:#3ec3f7}
