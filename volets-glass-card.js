@@ -1,4 +1,4 @@
-/* volets-glass-card v2 — vue Volets Liquid Glass (soeur de clim-glass-card) */
+/* volets-glass-card v3 — hero responsive iPhone (Indice+Ouverts en 2 colonnes, Extérieur en ligne secondaire) + fix scroll page (ne remonte plus en haut au clic). vue Volets Liquid Glass (soeur de clim-glass-card) */
 class VoletsGlassCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._sheet=false;this._last='';this._pend={};this._tmr={};}
   setConfig(cfg){
@@ -142,8 +142,10 @@ class VoletsGlassCard extends HTMLElement{
       ${sh('var(--manual)','Soir et confort',icMoon)}
       <div class='ph'>Position confort thermique : <span class='nw'>${num(c.posC,'\u00a0%',5)} d'ouverture</span></div>
     </div>`;}
+  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
   _render(){if(!this._h)return;
     const c=this._c;
+    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     const sheets=this._open?this._sheetRoomHtml():(this._sheet?this._setSheetHtml():'');
     this.shadowRoot.innerHTML=`<style>${this._css()}</style>
     <div class='wrap'>
@@ -156,7 +158,8 @@ class VoletsGlassCard extends HTMLElement{
     </div>${sheets}`;
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
     const sc=this.shadowRoot.querySelector('.sheetScroll');if(sc&&this._scTop)sc.scrollTop=this._scTop;
-    if(sc)sc.addEventListener('scroll',()=>{this._scTop=sc.scrollTop;});}
+    if(sc)sc.addEventListener('scroll',()=>{this._scTop=sc.scrollTop;});
+    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
     if(act==='back'){this._nav(c.back);return;}
     if(act==='sopen'){e.stopPropagation();this._sheet=true;this._scTop=0;this._last='';this._render();return;}
@@ -195,10 +198,11 @@ class VoletsGlassCard extends HTMLElement{
 .gear:active{transform:scale(.92)}
 .hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:10px}
-.hStats{display:flex;gap:30px;flex-wrap:wrap;row-gap:14px}
-.stat{white-space:nowrap}
-.stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
-.stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
+.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:end}
+.stat{white-space:nowrap;min-width:0}
+.stat.out{grid-column:1 / -1;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);opacity:.7;display:flex;align-items:baseline;gap:9px}
+.stat.out .sv{font-size:21px;font-weight:600;line-height:1}
+.stat.out .sl{order:-1;margin-top:0}
 .sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
 .sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -265,6 +269,10 @@ class VoletsGlassCard extends HTMLElement{
 .hHead{margin-bottom:12px}
 .heroRow{margin-top:0;flex-shrink:0;align-self:center;flex:0 1 auto;max-width:580px;min-width:300px;justify-content:flex-end}
 .sv{font-size:40px}
+.hStats{display:flex;gap:30px;align-items:flex-start}
+.stat.out{grid-column:auto;margin-top:0;padding-top:0;border-top:none;padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78;display:block}
+.stat.out .sv{font-size:26px}
+.stat.out .sl{order:0;margin-top:5px}
 .grid{grid-template-columns:repeat(4,1fr);gap:14px}
 .room{min-height:132px;padding:16px}
 .secTitle{font-size:20px;margin:6px 4px 14px}
