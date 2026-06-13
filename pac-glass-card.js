@@ -80,8 +80,8 @@ class PacGlassCard extends HTMLElement{
     return `<div class='hero'>
       <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Pompe \u00e0 chaleur<span class='profil'>${pill}</span></div></div>
       <div class='hStats'>
-        <div class='stat'><div class='sv'>${this._n(this._a(c.rdc,'current_temperature'))}\u00b0</div><div class='sl'>RDC \u00b7 consigne ${this._setp(this._a(c.rdc,'temperature'))}\u00b0</div></div>
-        <div class='stat'><div class='sv'>${this._n(this._a(c.etage,'current_temperature'))}\u00b0</div><div class='sl'>Chambres \u00b7 consigne ${this._setp(this._a(c.etage,'temperature'))}\u00b0</div></div>
+        <div class='stat'><div class='sv'>${this._n(this._a(c.rdc,'current_temperature'))}\u00b0</div><div class='sl'>RDC \u00b7 ${this._setp(this._a(c.rdc,'temperature'))}\u00b0</div></div>
+        <div class='stat'><div class='sv'>${this._n(this._a(c.etage,'current_temperature'))}\u00b0</div><div class='sl'>Chambres \u00b7 ${this._setp(this._a(c.etage,'temperature'))}\u00b0</div></div>
         <div class='stat out'><div class='sv'>${this._n(this._s(c.ext))}\u00b0</div><div class='sl'>Ext\u00e9rieur</div></div>
       </div>
       <div class='sub'>${actTxt}</div></div>
@@ -169,8 +169,8 @@ class PacGlassCard extends HTMLElement{
 .hero{position:relative;background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px}
 .hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:10px}
-.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:start}
-.stat{min-width:0}
+.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:end}
+.stat{white-space:nowrap;min-width:0}
 .stat.out{grid-column:1 / -1;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);opacity:.7;display:flex;align-items:baseline;gap:9px}
 .stat.out .sv{font-size:21px;font-weight:600;line-height:1}
 .stat.out .sl{order:-1;margin-top:0}
