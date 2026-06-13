@@ -58,6 +58,8 @@ class VoletsGlassCard extends HTMLElement{
       if(real!=null&&!moving&&Math.abs(real-this._pend[k])<=2){delete this._pend[k];clearTimeout(this._tmr[k]);changed=true;}}
     if(changed)this._last='';}
   _countOpen(){let n=0;this._rooms().forEach(r=>{const p=this._pos(r);if(p!=null&&p>=this._c.openThreshold)n++;});return n;}
+  _zoneCounts(grp){let open=0,closed=0,na=0;grp.forEach(r=>{const p=this._pos(r);if(p==null){na++;return;}if(p>=this._c.openThreshold)open++;else if(p<=0)closed++;});return {open,closed,na,active:grp.length-na};}
+  _secHeader(label,grp,gkey){const z=this._zoneCounts(grp);const allOpen=z.active>0&&z.open===z.active;const allClosed=z.active>0&&z.closed===z.active;const btns=[];if(!allOpen)btns.push(`<span class='secBtn open' data-act='groupAll' data-g='${gkey}' data-m='open'>Tout ouvrir</span>`);if(!allClosed)btns.push(`<span class='secBtn close' data-act='groupAll' data-g='${gkey}' data-m='close'>Tout fermer</span>`);return `<div class='secHead'><div class='secTitle'>${label}</div><div class='secBtns'>${btns.join('')}</div></div>`;}
   _n(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:1});}
   _brainVars(){const c=this._c;const f=(e,d)=>{const v=parseFloat(this._s(e));return isNaN(v)?d:v;};
     const indice=f(c.indice,0),extc=f(c.extc,0),extf=extc,rdc=f(c.rdc,0),etage=f(c.etage,0);
@@ -188,9 +190,9 @@ class VoletsGlassCard extends HTMLElement{
     <div class='wrap'>
       <div class='top'><span class='back' data-act='back'>\u2039&nbsp;Accueil</span></div>
       ${this._heroHtml()}
-      <div class='secTitle'>RDC</div>
+      ${this._secHeader('RDC',c.grpRdc,'rdc')}
       <div class='grid'>${c.grpRdc.map(r=>this._tile(r)).join('')}</div>
-      <div class='secTitle'>\u00c9tage</div>
+      ${this._secHeader('\u00c9tage',c.grpEtage,'etage')}
       <div class='grid'>${c.grpEtage.map(r=>this._tile(r)).join('')}</div>
     </div>${sheets}`;
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
@@ -202,6 +204,7 @@ class VoletsGlassCard extends HTMLElement{
     if(act==='sclose'){this._sheet=false;this._last='';this._render();return;}
     if(act==='rclose'){this._open=null;this._pend={};this._last='';this._render();return;}
     if(act==='chip'){e.stopPropagation();h.callService('input_boolean','toggle',{entity_id:t.dataset.e});return;}
+    if(act==='groupAll'){e.stopPropagation();const grp=t.dataset.g==='rdc'?c.grpRdc:c.grpEtage;const ids=grp.map(r=>r.cover);const svc=t.dataset.m==='open'?'open_cover':'close_cover';h.callService('cover',svc,{entity_id:ids});return;}
     if(act==='pilot'){e.stopPropagation();const aOn=this._s(c.auto)==='on';const mans=this._rooms().filter(r=>r.manual&&this._s(r.manual)==='on').map(r=>r.manual);if(!aOn){h.callService('input_boolean','turn_on',{entity_id:c.auto});return;}if(mans.length){h.callService('input_boolean','turn_off',{entity_id:mans});return;}h.callService('input_boolean','turn_off',{entity_id:c.auto});return;}
     if(act==='goTarget'){e.stopPropagation();const rr=this._rooms().find(x=>x.key===t.dataset.k);if(!rr)return;const tgt=this._targetFor(rr);if(tgt==null)return;this._pend[rr.key]=tgt;h.callService('cover','set_cover_position',{entity_id:rr.cover,position:tgt});clearTimeout(this._tmr[rr.key]);this._tmr[rr.key]=setTimeout(()=>{delete this._pend[rr.key];this._last='';this._render();},15000);this._last='';this._render();return;}
     if(act==='open'){if(e.target.closest("[data-act='quick']"))return;this._open=t.dataset.k;this._last='';this._render();return;}
@@ -248,6 +251,13 @@ class VoletsGlassCard extends HTMLElement{
 .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0}
 .chip.on .dot{background:#3ec3f7}
 .secTitle{font-size:18px;font-weight:700;color:#fff;margin:0 4px 12px}
+.secHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 4px;padding-right:4px}
+.secHead .secTitle{margin:0 4px 0}
+.secBtns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.secBtn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:14px;font-size:13px;font-weight:600;border:1px solid var(--stroke);background:rgba(255,255,255,.08);color:var(--txt2);cursor:pointer;user-select:none;white-space:nowrap;transition:.15s}
+.secBtn:active{transform:scale(.95)}
+.secBtn.open{background:rgba(111,220,255,.13);border-color:rgba(111,220,255,.4);color:var(--cool)}
+.secBtn.close{background:rgba(255,195,92,.13);border-color:rgba(255,195,92,.4);color:var(--manual)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .room{position:relative;background:var(--glass);border:1px solid var(--stroke);border-radius:22px;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);padding:14px;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;overflow:hidden;transition:background .25s,transform .15s,color .25s,box-shadow .25s}
 .room:active{transform:scale(.97)}
