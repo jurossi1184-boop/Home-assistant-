@@ -1,10 +1,15 @@
-/* volets-glass-card v4 — réglages : mentions intérieur/extérieur sur chaque seuil + correction libellé Mode doux (PV sous, pas au-dessus) + glisser vers le bas pour fermer la fenêtre (swipe-to-dismiss).  hero responsive iPhone (Indice+Ouverts en 2 colonnes, Extérieur en ligne secondaire) + fix scroll page (ne remonte plus en haut au clic). vue Volets Liquid Glass (soeur de clim-glass-card) */
+/* volets-glass-card v3 — vue Volets Liquid Glass (soeur de clim-glass-card). Affiche la cible cerveau par volet, _why complet (heat_mode/anticipation/coucher/garde-fou/soft), profil cliquable, salon_devant et parents marqués non pilotés. */
 class VoletsGlassCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._sheet=false;this._last='';this._pend={};this._tmr={};}
   setConfig(cfg){
     this._c=Object.assign({
       indice:'sensor.indice_surchauffe',
       ext:'sensor.alsace_outdoor_temperature',
+      rdc:'sensor.temperature_interieure_rdc',
+      etage:'sensor.alsace_zone_etage_circuit_0_current_temperature',
+      extc:'sensor.temperature_exterieure_corrigee',
+      pv:'sensor.jackery_home_pv_lissee',
+      sun:'sun.sun',
       fSej:'input_boolean.sejour_ombrage_actif',
       fEta:'input_boolean.etage_ombrage_actif',
       fConf:'input_boolean.volets_confort_thermique_ferme',
@@ -23,15 +28,15 @@ class VoletsGlassCard extends HTMLElement{
       back:'/dashboard-test/accueil',
       openThreshold:95,
       grpRdc:[
-        {key:'salondevant',name:'Salon Devant',cover:'cover.salon_devant',manual:'input_boolean.volets_manuel_salon_devant',piloted:true,zone:'sejour'},
-        {key:'sejourjardin',name:'S\u00e9jour Jardin',cover:'cover.sejour_jardin',manual:'input_boolean.volets_manuel_sejour_jardin',piloted:true,zone:'sejour'},
-        {key:'terrasse',name:'Terrasse',cover:'cover.terrasse',manual:'input_boolean.volets_manuel_terrasse',piloted:true,zone:'sejour'},
-        {key:'cuisine',name:'Cuisine',cover:'cover.cuisine',manual:'input_boolean.volets_manuel_cuisine',piloted:true,zone:'sejour'}
+        {key:'salondevant',name:'Salon Devant',cover:'cover.salon_devant',manual:'input_boolean.volets_manuel_salon_devant',piloted:false,zone:'sejour'},
+        {key:'sejourjardin',name:'S\u00e9jour Jardin',cover:'cover.sejour_jardin',manual:'input_boolean.volets_manuel_sejour_jardin',piloted:true,zone:'sejour',targetType:'west'},
+        {key:'terrasse',name:'Terrasse',cover:'cover.terrasse',manual:'input_boolean.volets_manuel_terrasse',piloted:true,zone:'sejour',targetType:'south'},
+        {key:'cuisine',name:'Cuisine',cover:'cover.cuisine',manual:'input_boolean.volets_manuel_cuisine',piloted:true,zone:'sejour',targetType:'south'}
       ],
       grpEtage:[
-        {key:'parents',name:'Parents',cover:'cover.chambre_3',manual:'input_boolean.volets_manuel_parents',piloted:true,zone:'etage'},
-        {key:'louise',name:'Louise',cover:'cover.chambre_2',manual:'input_boolean.volets_manuel_louise',piloted:true,zone:'etage'},
-        {key:'leandre',name:'L\u00e9andre',cover:'cover.chambre_leandre',manual:'input_boolean.volets_manuel_leandre',piloted:true,zone:'etage'}
+        {key:'parents',name:'Parents',cover:'cover.chambre_3',manual:'input_boolean.volets_manuel_parents',piloted:false,zone:'etage'},
+        {key:'louise',name:'Louise',cover:'cover.chambre_2',manual:'input_boolean.volets_manuel_louise',piloted:true,zone:'etage',targetType:'kids'},
+        {key:'leandre',name:'L\u00e9andre',cover:'cover.chambre_leandre',manual:'input_boolean.volets_manuel_leandre',piloted:true,zone:'etage',targetType:'kids'}
       ]
     },cfg||{});
   }
@@ -54,6 +59,28 @@ class VoletsGlassCard extends HTMLElement{
     if(changed)this._last='';}
   _countOpen(){let n=0;this._rooms().forEach(r=>{const p=this._pos(r);if(p!=null&&p>=this._c.openThreshold)n++;});return n;}
   _n(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:1});}
+  _brainVars(){const c=this._c;const f=(e,d)=>{const v=parseFloat(this._s(e));return isNaN(v)?d:v;};
+    const indice=f(c.indice,0),extc=f(c.extc,0),extf=extc,rdc=f(c.rdc,0),etage=f(c.etage,0);
+    const pv=parseFloat(this._s(c.pv));const prev=f(c.prevMax,0);
+    const sAntic=f(c.ant,28),sDpv=f(c.dpv,500),sDtemp=f(c.dtemp,22),sGf=f(c.gf,24.5);
+    const azimuth=parseFloat(this._a(c.sun,'azimuth'))||0;
+    const sej=this._s(c.fSej)==='on',couvert=this._s(c.cielCouvert)==='on';
+    const antic=prev>sAntic;
+    const heat_mode=extc<18&&rdc<22;
+    const soft=!sej||couvert||((!isNaN(pv)&&pv<sDpv)&&extc<sDtemp);
+    const open_base=heat_mode||(soft&&!antic);
+    const plancher=(antic||extf>30)?0:((extf>=26||indice>=90)?30:40);
+    const target=Math.max(100-indice-(antic?35:0),plancher);
+    const south_exposed=azimuth>=90&&azimuth<=245;
+    const west_exposed=azimuth>=190;
+    const south_target=open_base?100:(south_exposed?target:100);
+    const west_target=open_base?100:(west_exposed?target:100);
+    const now=new Date();const hh=now.getHours(),mm=now.getMinutes();
+    const coucher=(hh===20&&mm>=30)||hh>=21||hh<9;
+    const kids_gf=south_exposed&&etage>sGf;
+    const kids_target=coucher?0:(kids_gf?target:south_target);
+    return {south_target:Math.round(south_target),west_target:Math.round(west_target),kids_target:Math.round(kids_target),open_base,antic,heat_mode,soft,couvert,sej,south_exposed,west_exposed,coucher,kids_gf,target:Math.round(target)};}
+  _targetFor(r){if(!r.piloted||!r.targetType)return null;const b=this._brainVars();return b[r.targetType+'_target'];}
   _fp(){const ids=[this._c.indice,this._c.ext,this._c.profil,this._c.prevMax,this._c.fSej,this._c.fEta,this._c.fConf,this._c.ph,this._c.pb,this._c.gf,this._c.ant,this._c.couv,this._c.dpv,this._c.dtemp,this._c.posC];
     ids.push(this._c.auto,this._c.cielCouvert);this._rooms().forEach(r=>{ids.push(r.cover);if(r.manual)ids.push(r.manual);});
     return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.current_position!=null?st.attributes.current_position:''):'x';}).join(';')+(this._open||'')+(this._sheet?'S':'')+JSON.stringify(this._pend);}
@@ -62,12 +89,18 @@ class VoletsGlassCard extends HTMLElement{
     if(r.manual&&this._s(r.manual)==='on')return 'Mode manuel \u2014 le cerveau ne touche pas ce volet';
     if(!r.piloted)return 'Volet libre \u2014 non pilot\u00e9 par le cerveau';
     if(this._s(c.auto)!=='on')return 'Pilotage automatique coup\u00e9';
+    const b=this._brainVars();
+    if(r.targetType==='kids'&&b.coucher)return 'Coucher \u2014 chambre ferm\u00e9e de 20h30 \u00e0 9h';
     const h2=new Date().getHours();
     if(h2<9)return 'Avant 9h \u2014 position nuit (s\u00e9curit\u00e9 chat)';
-    if(this._s(c.cielCouvert)==='on')return 'Maintenu ouvert \u2014 ciel couvert, aucun soleil \u00e0 bloquer';
-    const sej=this._s(c.fSej)==='on',eta=this._s(c.fEta)==='on';
-    if(r.zone==='sejour')return sej?'Ombrage \u2014 le s\u00e9jour a chaud et le soleil donne':'Ouvert \u2014 s\u00e9jour sous son plafond de temp\u00e9rature';
-    return (eta||sej)?'Suit l\u2019ombrage sud (protection \u00e9tage)':'Ouvert \u2014 \u00e9tage sous son plafond';}
+    if(b.heat_mode)return 'Chauffage passif \u2014 RDC frais, on capte le soleil (forc\u00e9 ouvert)';
+    if(b.antic)return 'Anticipation m\u00e9t\u00e9o \u2014 pr\u00e9-fermeture (pr\u00e9vision \u00e9lev\u00e9e)';
+    if(r.targetType==='kids'&&b.kids_gf)return 'Garde-fou \u00e9tage \u2014 chambres ombr\u00e9es (\u00e9tage chaud + soleil sud)';
+    if(b.soft)return b.couvert?'Ciel couvert \u2014 maintenu ouvert, aucun soleil \u00e0 bloquer':'Jour doux \u2014 soleil faible et air frais, pas besoin d\u2019ombre';
+    if(r.targetType==='south'&&!b.south_exposed)return 'Ouvert \u2014 le soleil n\u2019est plus sur la fa\u00e7ade sud';
+    if(r.targetType==='west'&&!b.west_exposed)return 'Ouvert \u2014 le soleil n\u2019est plus sur la fa\u00e7ade ouest';
+    if(r.targetType==='kids'&&!b.south_exposed)return 'Ouvert \u2014 le sud est libre, les chambres suivent';
+    return 'Ombrage actif \u2014 protection thermique en cours';}
   _statusTxt(r){const st=this._s(r.cover);if(st==='opening')return'Ouverture\u2026';if(st==='closing')return'Fermeture\u2026';const p=this._pos(r);if(p==null)return'Indisponible';if(p>=100)return'Ouvert';if(p<=0)return'Ferm\u00e9';return'\u00c0 '+this._n(p)+'\u00a0%';}
   _icWin(){return `<svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><rect x='4.5' y='3.5' width='15' height='17' rx='2.2'/><path d='M4.5 8h15M4.5 12.5h15'/></svg>`;}
   _tile(r){const st=this._s(r.cover);const p=this._pos(r);const na=p==null;
@@ -86,15 +119,17 @@ class VoletsGlassCard extends HTMLElement{
     const ombL=sej&&eta?'Ombrage \u00b7 s\u00e9jour + \u00e9tage':(sej?'Ombrage \u00b7 s\u00e9jour':(eta?'Ombrage \u00b7 \u00e9tage':'Ombrage inactif'));
     const flags=[[sej||eta,ombL],[this._s(c.fConf)==='on','Confort ferm\u00e9']];
     const n=this._countOpen();const tot=this._rooms().length;
+    const autoOn=this._s(c.auto)==='on';
     let actTxt;
     if(sej&&eta)actTxt='Ombrage actif \u00b7 s\u00e9jour et \u00e9tage';
     else if(sej)actTxt='Ombrage actif \u00b7 s\u00e9jour';
     else if(eta)actTxt='Ombrage actif \u00b7 \u00e9tage';
     else actTxt=n>=tot?'Tout ouvert':(n<=0?'Tout ferm\u00e9':n+' ouvert'+(n>1?'s':'')+' sur '+tot);
+    if(!autoOn)actTxt='Pilotage coup\u00e9 \u00b7 '+actTxt;
     return `<div class='hero'>
-      <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Volets<span class='profil'>${this._s(c.profil)||''}\u00a0\u00b7\u00a0max ${this._n(this._s(c.prevMax))}\u00b0</span></div><span class='gear' data-act='sopen'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M4 7h9.4M18.6 7H20M4 12h3.4M12.6 12H20M4 17h11.4'/><circle cx='16' cy='7' r='2.3'/><circle cx='10' cy='12' r='2.3'/><circle cx='18' cy='17' r='2.3'/></svg></span></div>
+      <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Volets<span class='profil' data-act='profil'>${this._s(c.profil)||''}\u00a0\u00b7\u00a0max pr\u00e9vu ${this._n(this._s(c.prevMax))}\u00b0</span></div><span class='gear' data-act='sopen'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M4 7h9.4M18.6 7H20M4 12h3.4M12.6 12H20M4 17h11.4'/><circle cx='16' cy='7' r='2.3'/><circle cx='10' cy='12' r='2.3'/><circle cx='18' cy='17' r='2.3'/></svg></span></div>
       <div class='hStats'>
-        <div class='stat'><div class='sv'>${this._n(this._s(c.indice))}</div><div class='sl'>Indice surchauffe</div></div>
+        <div class='stat'><div class='sv'>${this._n(this._s(c.indice))}<span class='svDim'>\u2009%</span></div><div class='sl'>Indice surchauffe</div></div>
         <div class='stat'><div class='sv'>${n}<span class='svDim'>/${tot}</span></div><div class='sl'>Ouverts</div></div>
         <div class='stat out'><div class='sv'>${this._n(this._s(c.ext))}\u00b0</div><div class='sl'>Ext\u00e9rieur</div></div>
       </div>
@@ -103,12 +138,16 @@ class VoletsGlassCard extends HTMLElement{
       </div>`;}
   _sheetRoomHtml(){const r=this._rooms().find(x=>x.key===this._open);if(!r)return'';
     const p=this._pos(r);const posC=this._n(this._s(this._c.posC));
+    const target=this._targetFor(r);
+    const manOn=r.manual&&this._s(r.manual)==='on';
+    const showTarget=target!=null&&!manOn&&this._s(this._c.auto)==='on';
+    const targetRow=showTarget?`<div class='whyRow targetRow' data-act='goTarget' data-k='${r.key}'><span class='tDot'></span>Cible cerveau : <b>${target}\u00a0%</b> \u00b7 toucher pour s'y mettre</div>`:'';
     return `<div class='scrim open' data-act='rclose'></div>
     <div class='sheet open'><div class='grab'></div>
       <div class='sheetHead'><h2>${r.name}</h2><button class='close' data-act='rclose'>Fermer</button></div>
       <div class='dial'>
         <button class='stepBtn' data-act='pstep' data-k='${r.key}' data-d='-10'>\u2212</button>
-        <div class='target'><div class='tval'>${this._n(p)}\u00a0%</div><div class='tlab'>Position d'ouverture</div></div>
+        <div class='target'><div class='tval'>${this._n(p)}\u00a0%</div><div class='tlab'>Position actuelle</div></div>
         <button class='stepBtn' data-act='pstep' data-k='${r.key}' data-d='10'>+</button>
       </div>
       <div class='modes'>
@@ -117,8 +156,9 @@ class VoletsGlassCard extends HTMLElement{
         <div class='mode' data-act='cmd' data-k='${r.key}' data-m='close'>Fermer</div>
         <div class='mode' data-act='cmd' data-k='${r.key}' data-m='confort'>Confort ${posC}\u00a0%</div>
       </div>
+      ${targetRow}
       <div class='whyRow'>${this._why(r)}</div>
-      ${r.manual?`<div class='manRow ${this._s(r.manual)==='on'?'manOn':''}' data-act='chip' data-e='${r.manual}'>${this._s(r.manual)==='on'?'Mode manuel \u2014 le cerveau ne touche pas ce volet \u00b7 toucher pour rendre la main':'Pilot\u00e9 automatiquement \u00b7 toucher pour passer en manuel'}</div>`:''}
+      ${r.manual?`<div class='manRow ${manOn?'manOn':''}' data-act='chip' data-e='${r.manual}'>${manOn?'Mode manuel \u2014 le cerveau ne touche pas ce volet \u00b7 toucher pour rendre la main':'Pilot\u00e9 automatiquement \u00b7 toucher pour passer en manuel'}</div>`:''}
     </div>`;}
   _setSheetHtml(){const c=this._c;
     const N=e=>this._n(this._s(e));
@@ -132,24 +172,22 @@ class VoletsGlassCard extends HTMLElement{
     <div class='sheet open sheetScroll'><div class='grab'></div>
       <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close' data-act='sclose'>Fermer</button></div>
       ${sh('#ffd60a','Ombrage automatique',icSun)}
-      <div class='ph'>Le s\u00e9jour s'ombrage quand <span class='tin'>l'int\u00e9rieur du salon</span> <span class='nw'>d\u00e9passe ${num(c.ph,'\u00b0',0.5)}</span>, <span class='nw'>lib\u00e8re sous ${num(c.pb,'\u00b0',0.5)}</span></div>
-      <div class='ph'>Garde-fou \u00e9tage : chambres ombr\u00e9es quand <span class='tin'>l'int\u00e9rieur de l'\u00e9tage</span> <span class='nw'>d\u00e9passe ${num(c.gf,'\u00b0',0.5)}</span></div>
+      <div class='ph'>Le s\u00e9jour s'ombrage <span class='nw'>au-dessus de ${num(c.ph,'\u00b0',0.5)}</span> <span class='nw'>et lib\u00e8re sous ${num(c.pb,'\u00b0',0.5)}</span></div>
+      <div class='ph'>Garde-fou \u00e9tage : <span class='nw'>chambres ombr\u00e9es si l'\u00e9tage d\u00e9passe ${num(c.gf,'\u00b0',0.5)}</span></div>
       ${sh('#6fdcff','Anticipation m\u00e9t\u00e9o',icCloud)}
-      <div class='ph'>\u00c0 9h, pr\u00e9-fermer si la <span class='tex'>pr\u00e9vision ext\u00e9rieure</span> <span class='nw'>d\u00e9passe ${num(c.ant,'\u00b0',0.5)}</span></div>
+      <div class='ph'>\u00c0 9h, <span class='nw'>pr\u00e9-fermer si la pr\u00e9vision d\u00e9passe ${num(c.ant,'\u00b0',0.5)}</span></div>
       <div class='ph'>Ciel consid\u00e9r\u00e9 couvert <span class='nw'>sous ${num(c.couv,'\u00a0W',10)}</span> de rayonnement</div>
       ${sh('#79e3c0','Mode doux',icLeaf)}
-      <div class='ph'>Actif quand le PV est <span class='nw'>sous ${num(c.dpv,'\u00a0W',10)}</span> et la <span class='tex'>temp. ext\u00e9rieure</span> <span class='nw'>sous ${num(c.dtemp,'\u00b0',0.5)}</span></div>
+      <div class='ph'>S'active si <span class='nw'>le PV d\u00e9passe ${num(c.dpv,'\u00a0W',10)}</span> <span class='nw'>et la temp\u00e9rature ${num(c.dtemp,'\u00b0',0.5)}</span></div>
       ${sh('var(--manual)','Soir et confort',icMoon)}
       <div class='ph'>Position confort thermique : <span class='nw'>${num(c.posC,'\u00a0%',5)} d'ouverture</span></div>
     </div>`;}
-  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
-  _attachSheetSwipe(){const sheet=this.shadowRoot.querySelector('.sheet');if(!sheet)return;const scrim=this.shadowRoot.querySelector('.scrim');const grab=sheet.querySelector('.grab');if(grab&&getComputedStyle(grab).display==='none')return;let y0=0,sc0=0,dy=0,active=false,grabbed=false;sheet.addEventListener('touchstart',ev=>{if(ev.touches.length!==1)return;y0=ev.touches[0].clientY;sc0=sheet.scrollTop;dy=0;active=false;grabbed=!!(grab&&(ev.target===grab||(ev.target.closest&&ev.target.closest('.sheetHead'))));sheet.style.transition='none';if(scrim)scrim.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)return;const d=ev.touches[0].clientY-y0;if(!active){if(d>4&&(sc0<=0||grabbed))active=true;else return;}dy=d>0?d:0;sheet.style.transform='translateY('+dy+'px)';if(scrim)scrim.style.opacity=String(Math.max(0,1-dy/400));if(ev.cancelable)ev.preventDefault();},{passive:false});const end=()=>{sheet.style.transition='';if(scrim)scrim.style.transition='';if(active&&dy>90){sheet.style.transform='translateY(100%)';if(scrim)scrim.style.opacity='0';setTimeout(()=>{this._sheet=false;this._open=null;this._last='';this._render();},300);}else{sheet.style.transform='';if(scrim)scrim.style.opacity='';}active=false;dy=0;};sheet.addEventListener('touchend',end);sheet.addEventListener('touchcancel',end);}
   _render(){if(!this._h)return;
     const c=this._c;
-    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     const sheets=this._open?this._sheetRoomHtml():(this._sheet?this._setSheetHtml():'');
     this.shadowRoot.innerHTML=`<style>${this._css()}</style>
     <div class='wrap'>
+      <div class='top'><span class='back' data-act='back'>\u2039&nbsp;Accueil</span></div>
       ${this._heroHtml()}
       <div class='secTitle'>RDC</div>
       <div class='grid'>${c.grpRdc.map(r=>this._tile(r)).join('')}</div>
@@ -158,16 +196,16 @@ class VoletsGlassCard extends HTMLElement{
     </div>${sheets}`;
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
     const sc=this.shadowRoot.querySelector('.sheetScroll');if(sc&&this._scTop)sc.scrollTop=this._scTop;
-    if(sc)sc.addEventListener('scroll',()=>{this._scTop=sc.scrollTop;});
-    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
-    this._attachSheetSwipe();}
+    if(sc)sc.addEventListener('scroll',()=>{this._scTop=sc.scrollTop;});}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
     if(act==='back'){this._nav(c.back);return;}
     if(act==='sopen'){e.stopPropagation();this._sheet=true;this._scTop=0;this._last='';this._render();return;}
     if(act==='sclose'){this._sheet=false;this._last='';this._render();return;}
     if(act==='rclose'){this._open=null;this._pend={};this._last='';this._render();return;}
     if(act==='chip'){e.stopPropagation();h.callService('input_boolean','toggle',{entity_id:t.dataset.e});return;}
+    if(act==='profil'){e.stopPropagation();h.callService('input_select','select_next',{entity_id:c.profil});return;}
     if(act==='pilot'){e.stopPropagation();const aOn=this._s(c.auto)==='on';const mans=this._rooms().filter(r=>r.manual&&this._s(r.manual)==='on').map(r=>r.manual);if(!aOn){h.callService('input_boolean','turn_on',{entity_id:c.auto});return;}if(mans.length){h.callService('input_boolean','turn_off',{entity_id:mans});return;}h.callService('input_boolean','turn_off',{entity_id:c.auto});return;}
+    if(act==='goTarget'){e.stopPropagation();const rr=this._rooms().find(x=>x.key===t.dataset.k);if(!rr)return;const tgt=this._targetFor(rr);if(tgt==null)return;this._pend[rr.key]=tgt;h.callService('cover','set_cover_position',{entity_id:rr.cover,position:tgt});clearTimeout(this._tmr[rr.key]);this._tmr[rr.key]=setTimeout(()=>{delete this._pend[rr.key];this._last='';this._render();},15000);this._last='';this._render();return;}
     if(act==='open'){if(e.target.closest("[data-act='quick']"))return;this._open=t.dataset.k;this._last='';this._render();return;}
     const r=this._rooms().find(x=>x.key===t.dataset.k);
     if(act==='quick'){e.stopPropagation();if(!r)return;const m2=t.dataset.m;if(m2==='stop'){h.callService('cover','stop_cover',{entity_id:r.cover});return;}h.callService('cover',m2==='up'?'open_cover':'close_cover',{entity_id:r.cover});return;}
@@ -199,11 +237,10 @@ class VoletsGlassCard extends HTMLElement{
 .gear:active{transform:scale(.92)}
 .hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:10px}
-.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:end}
-.stat{white-space:nowrap;min-width:0}
-.stat.out{grid-column:1 / -1;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);opacity:.7;display:flex;align-items:baseline;gap:9px}
-.stat.out .sv{font-size:21px;font-weight:600;line-height:1}
-.stat.out .sl{order:-1;margin-top:0}
+.hStats{display:flex;gap:30px;flex-wrap:wrap;row-gap:14px}
+.stat{white-space:nowrap}
+.stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
+.stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
 .sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
 .sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -245,6 +282,10 @@ class VoletsGlassCard extends HTMLElement{
 .mode{flex:1;padding:11px 4px;border-radius:16px;text-align:center;font-size:13px;font-weight:600;color:var(--txt2);background:rgba(255,255,255,.06);border:1px solid var(--stroke);cursor:pointer;transition:.15s}
 .mode:active{transform:scale(.95);background:rgba(111,220,255,.18);border-color:rgba(111,220,255,.45);color:var(--cool)}
 .whyRow{font-size:13px;color:var(--txt2);line-height:1.5;padding:8px 4px 4px}
+.targetRow{display:flex;align-items:center;gap:8px;margin:6px 0 4px;padding:11px 14px;border-radius:14px;background:rgba(111,220,255,.1);border:1px solid rgba(111,220,255,.35);color:var(--cool);cursor:pointer;font-weight:600}
+.targetRow:active{transform:scale(.98)}
+.targetRow b{color:#fff;font-weight:700}
+.tDot{width:8px;height:8px;border-radius:50%;background:var(--cool);flex-shrink:0;box-shadow:0 0 8px rgba(111,220,255,.6)}
 .manRow{margin-top:12px;padding:13px 14px;border-radius:16px;font-size:13px;font-weight:600;line-height:1.45;color:var(--txt2);background:rgba(255,255,255,.06);border:1px solid var(--stroke);cursor:pointer}
 .manRow.manOn{background:rgba(255,195,92,.13);border-color:rgba(255,195,92,.45);color:var(--manual)}
 .shead{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--txt2);margin-top:18px;padding:0 4px 9px}
@@ -256,8 +297,6 @@ class VoletsGlassCard extends HTMLElement{
 .pv b{color:var(--cool);min-width:48px;text-align:center}
 .pBtn{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid var(--stroke);color:#f4f5ff;font-size:15px;cursor:pointer;flex-shrink:0}
 .nw{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.tin{color:#ffc89a;font-weight:600}
-.tex{color:#8fd0ff;font-weight:600}
 .sheetScroll{max-height:82vh;overflow-y:auto}
 @media(min-width:700px){
 .sheet{left:50%;right:auto;bottom:auto;top:50%;width:660px;max-width:92vw;border-radius:28px;border-bottom:1px solid var(--stroke);transform:translate(-50%,-46%) scale(.97);opacity:0;pointer-events:none;transition:.25s ease}
@@ -272,10 +311,6 @@ class VoletsGlassCard extends HTMLElement{
 .hHead{margin-bottom:12px}
 .heroRow{margin-top:0;flex-shrink:0;align-self:center;flex:0 1 auto;max-width:580px;min-width:300px;justify-content:flex-end}
 .sv{font-size:40px}
-.hStats{display:flex;gap:30px;align-items:flex-start}
-.stat.out{grid-column:auto;margin-top:0;padding-top:0;border-top:none;padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78;display:block}
-.stat.out .sv{font-size:26px}
-.stat.out .sl{order:0;margin-top:5px}
 .grid{grid-template-columns:repeat(4,1fr);gap:14px}
 .room{min-height:132px;padding:16px}
 .secTitle{font-size:20px;margin:6px 4px 14px}
@@ -290,9 +325,11 @@ class VoletsGlassCard extends HTMLElement{
 .room.dim .pastille{opacity:.5}
 .room.on .pastille{background:rgba(62,195,247,.16);color:#0a7eb8}
 .pwrGrp{display:flex;gap:6px}
-.profil{font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:11px;background:rgba(255,255,255,.1);border:1px solid var(--stroke);color:#f4f5ff;text-transform:none;white-space:nowrap}
+.profil{font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:11px;background:rgba(255,255,255,.1);border:1px solid var(--stroke);color:#f4f5ff;text-transform:none;white-space:nowrap;cursor:pointer;user-select:none}
+.profil:active{transform:scale(.94);background:rgba(255,255,255,.18)}
 .svDim{font-size:20px;font-weight:600;color:var(--txt2)}
-.chip.ro{cursor:default}
+.chip.ro{cursor:default;opacity:.75}
+.chip.ro.on{opacity:1}
 .chip.on.part .dot{background:#e8930c}
 .chip.on.part{color:#9a6200}
 `;}
