@@ -447,7 +447,7 @@ class AccueilGlassCard extends HTMLElement{
       :host{--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--heat:#ff9d6f;--okc:#7dffb2;--off:rgba(255,255,255,.35);--r:26px;display:block;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;}
       .wrap{max-width:1100px;margin:0 auto;container-type:inline-size;padding:0 2px;}
       .hero{${heroBg}border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px;transition:background .3s,border-color .3s,box-shadow .3s;}
-      .eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt2);}
+      .eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt2);min-height:36px;}
       .hTitle{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;}
       .hSub{font-size:14px;color:var(--txt2);text-transform:capitalize;}
       .pastilles{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
