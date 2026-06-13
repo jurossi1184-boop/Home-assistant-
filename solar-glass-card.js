@@ -1,4 +1,4 @@
-/* solar-glass-card v20 — tuiles Flux en lignes horizontales compactes (1 colonne) ; diagramme desktop 380 ; colonnes alignées en haut ; bandeau récap (mois, cumul, CO₂) ;
+/* solar-glass-card v21 — fix scroll page (ne remonte plus au clic) + hero mobile en 2x2 (Maison sans trait orphelin) ; tuiles Flux en lignes horizontales compactes (1 colonne) ; diagramme desktop 380 ; colonnes alignées en haut ; bandeau récap (mois, cumul, CO₂) ;
    tuile Maison : taux de couverture solaire instantané (pv/maison) au lieu du
    taux d'autoconsommation (trompeur : 100 % dès que rien n'est exporté) ;
    tuile Réseau : puissance tirée en temps réel ajoutée devant les kWh du jour */
@@ -247,8 +247,10 @@ class SolarGlassCard extends HTMLElement{
     setPath('flow-sol-bat',solToHome&&batCharge,pv);
     setPath('flow-res-mai',gridActive,grid);
     setPath('flow-bat-mai',batDischarge,Math.abs(batP));}
+  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
   _render(){if(!this._h)return;
     const c=this._c;
+    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     const prevSc=this.shadowRoot.querySelector('.sheetScroll');const sy=prevSc?prevSc.scrollTop:0;
     const sheets=this._open?this._sheetRoomHtml():(this._sheet?this._setSheetHtml():'');
     this.shadowRoot.innerHTML=`<style>${this._css()}</style>
@@ -270,6 +272,7 @@ class SolarGlassCard extends HTMLElement{
     const newSc=this.shadowRoot.querySelector('.sheetScroll');if(newSc&&sy)newSc.scrollTop=sy;
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
     this._patchFlows();
+    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
     this._lastStruct=this._structSig();}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const c=this._c;
     if(act==='back'){this._nav(c.back);return;}
@@ -288,9 +291,9 @@ class SolarGlassCard extends HTMLElement{
 .gear:active{transform:scale(.92)}
 .hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:10px}
-.hStats{display:flex;gap:30px;flex-wrap:wrap;row-gap:14px}
-.stat{white-space:nowrap}
-.stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
+.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:14px;align-items:start}
+.stat{white-space:nowrap;min-width:0}
+.stat.out{padding-left:0;border-left:none;opacity:.78}
 .stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
 .sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
@@ -360,6 +363,8 @@ class SolarGlassCard extends HTMLElement{
 .hHead{margin-bottom:12px}
 .heroRow{margin-top:0;width:470px;flex-shrink:0;align-self:center}
 .sv{font-size:40px}
+.hStats{display:flex;gap:30px;align-items:flex-start}
+.stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22)}
 .secTitle{font-size:20px;margin:6px 4px 14px}
 .lowerCols{display:flex;gap:24px;align-items:flex-start}
 .fluxCol{flex:1;min-width:0}

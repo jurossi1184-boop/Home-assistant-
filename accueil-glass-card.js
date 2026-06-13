@@ -1,4 +1,4 @@
-/* accueil-glass-card v25 — nettoyage + fix palette hero (hex) + code mort purgé
+/* accueil-glass-card v26 — fix scroll page (ne remonte plus au clic) ; nettoyage + fix palette hero (hex) + code mort purgé
    Palette hero adaptative (toutes couleurs) · patch ciblé anti-sursaut · badges ⚡🔥📍
    Tokens : --glass .11 / --stroke .16 / --r 26px / blur 24px / max 1100px / @container 880px */
 class AccueilGlassCard extends HTMLElement{
@@ -368,10 +368,12 @@ class AccueilGlassCard extends HTMLElement{
       const p=day.querySelector('.fcP');if(p&&d.precipitation>0)p.innerHTML=`${this._ic('drop','fpi')}${d.precipitation.toFixed(d.precipitation<10?1:0)} mm`;
     });
   }
+  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
   _render(m){
     if(!this._h)return;
     if(!m)m=this._model();
     const c=this._c;
+    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     const {salut,dateFr,climOn,autoOn,awayOn,ecsOn,nVolets,climsTxt,alerts,palette,movingOpen,movingClose,chipVals,tileSubs,eyeTxt}=m;
 
     const fcHtml=(this._fc||[]).map((d,i)=>{
@@ -681,6 +683,7 @@ class AccueilGlassCard extends HTMLElement{
         else if(a==='vstop')this._coverSeq('stop_cover');
       });
     });
+    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
   }
 }
 customElements.define('accueil-glass-card',AccueilGlassCard);

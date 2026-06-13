@@ -1,4 +1,4 @@
-/* pac-glass-card v5 — vue Pompe à chaleur Liquid Glass — réglages MiGo · sélecteur Arrêt/Auto/Manuel (garde-fou Auto) · fixes: fp current_temperature, COP de secours bridé, anti-écritures redondantes, askAuto nettoyé, consigne ≤0 → "–", automation boost en config, CSS purgé */
+/* pac-glass-card v6 — fix scroll page (ne remonte plus au clic) + hero responsive iPhone (Extérieur en ligne secondaire) ; vue Pompe à chaleur Liquid Glass — réglages MiGo · sélecteur Arrêt/Auto/Manuel (garde-fou Auto) · fixes: fp current_temperature, COP de secours bridé, anti-écritures redondantes, askAuto nettoyé, consigne ≤0 → "–", automation boost en config, CSS purgé */
 class PacGlassCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._askAuto=null;this._last='';this._pend={};}
   setConfig(cfg){
@@ -118,8 +118,10 @@ class PacGlassCard extends HTMLElement{
       ${boostFlag?`<div class='boostBadge'>BOOST EN COURS \u2014 retour au mode pr\u00e9c\u00e9dent automatique</div>`:''}
       <div class='boostRow'>${boostFlag?`<div class='boostBtn stop' data-act='bstop'>Arr\u00eater le boost</div>`:`<div class='boostBtn' data-act='blaunch' data-k='${r.key}'>\u26a1 Lancer un boost</div>`}</div>
     </div>`;}
+  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
   _render(){if(!this._h)return;
     const c=this._c;
+    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     const sheets=this._open?this._sheetRoomHtml():'';
     this.shadowRoot.innerHTML=`<style>${this._css()}</style>
     <div class='wrap'>
@@ -128,7 +130,8 @@ class PacGlassCard extends HTMLElement{
       <div class='secTitle'>Circuits</div>
       <div class='grid'>${c.rooms.map(r=>this._tile(r)).join('')}</div>
     </div>${sheets}`;
-    this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});}
+    this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
+    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
     if(act!=='mode'&&act!=='autoOk'&&this._askAuto){this._askAuto=null;this._last='';}
     if(act==='back'){this._nav(c.back);return;}
@@ -159,10 +162,11 @@ class PacGlassCard extends HTMLElement{
 .hero{position:relative;background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px}
 .hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600}
-.hStats{display:flex;gap:30px;flex-wrap:wrap;row-gap:14px}
-.stat{white-space:nowrap}
-.stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
-.stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
+.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:end}
+.stat{white-space:nowrap;min-width:0}
+.stat.out{grid-column:1 / -1;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);opacity:.7;display:flex;align-items:baseline;gap:9px}
+.stat.out .sv{font-size:21px;font-weight:600;line-height:1}
+.stat.out .sl{order:-1;margin-top:0}
 .sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
 .sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -212,6 +216,10 @@ class PacGlassCard extends HTMLElement{
 .hHead{margin-bottom:12px}
 .heroRow{margin-top:0;width:470px;flex-shrink:0;align-self:center}
 .sv{font-size:40px}
+.hStats{display:flex;gap:30px;align-items:flex-start}
+.stat.out{grid-column:auto;margin-top:0;padding-top:0;border-top:none;padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78;display:block}
+.stat.out .sv{font-size:26px}
+.stat.out .sl{order:0;margin-top:5px}
 .grid{grid-template-columns:repeat(4,1fr);gap:14px}
 .room{min-height:132px;padding:16px}
 .secTitle{font-size:20px;margin:6px 4px 14px}
