@@ -71,8 +71,14 @@ class PacGlassCard extends HTMLElement{
     else if(hE)actTxt='Chauffe en cours \u00b7 chambres \u00b7 d\u00e9part '+this._n(this._s(c.flowEtage))+'\u00b0';
     else actTxt='Tout au repos \u00b7 ballon '+this._n(this._s(c.tankT))+'\u00b0 \u00b7 '+this._n(this._s(c.pression))+'\u00a0bar';
     const chips=[[hR,'Chauffe RDC'],[hE,'Chauffe chambres'],[dhw,'Eau chaude']];
+    let pill;
+    if(dhw)pill='ECS '+this._n(this._s(c.tankT))+'\u00b0';
+    else if(hR&&hE)pill='Chauffe \u00b7 2 circuits';
+    else if(hR)pill='Chauffe RDC';
+    else if(hE)pill='Chauffe chambres';
+    else pill='Tout au repos';
     return `<div class='hero'>
-      <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Pompe \u00e0 chaleur${cop?`<span class='profil'>COP ${cop}</span>`:''}</div></div>
+      <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Pompe \u00e0 chaleur<span class='profil'>${pill}</span></div></div>
       <div class='hStats'>
         <div class='stat'><div class='sv'>${this._n(this._a(c.rdc,'current_temperature'))}\u00b0</div><div class='sl'>RDC \u00b7 consigne ${this._setp(this._a(c.rdc,'temperature'))}\u00b0</div></div>
         <div class='stat'><div class='sv'>${this._n(this._a(c.etage,'current_temperature'))}\u00b0</div><div class='sl'>Chambres \u00b7 consigne ${this._setp(this._a(c.etage,'temperature'))}\u00b0</div></div>
