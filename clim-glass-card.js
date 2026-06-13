@@ -1,4 +1,4 @@
-/* clim-glass-card v42 — minuterie PAR PIÈCE (timer.clim_minuterie_<key>) : chaque clim a son propre décompte indépendant, lancer une minuterie sur une clim n'affecte plus les autres. Décompte "S'éteint à HH:MM" (fiche + tuile), Annuler ciblé. Extinction réelle par automation.clim_minuterie_echue. */
+/* clim-glass-card v43 — fix scroll : la page ne remonte plus en haut quand on clique sur un bouton après avoir scrollé (position de page mémorisée/restaurée autour du re-rendu). minuterie PAR PIÈCE (timer.clim_minuterie_<key>) : chaque clim a son propre décompte indépendant, lancer une minuterie sur une clim n'affecte plus les autres. Décompte "S'éteint à HH:MM" (fiche + tuile), Annuler ciblé. Extinction réelle par automation.clim_minuterie_echue. */
 class ClimGlassCard extends HTMLElement{
   setConfig(c){
     this._c=Object.assign({
@@ -331,12 +331,14 @@ class ClimGlassCard extends HTMLElement{
       ${sh('rgba(255,255,255,.55)','Fen\u00eatres',icWin)}
       <div class='ph'>Apr\u00e8s une fen\u00eatre referm\u00e9e, <span class='nw'>la clim repart au bout de ${num(c.delai,'\u00a0s')}</span> dans le mode qu'elle avait</div>
     </div>`;}
+  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
   _render(){
     if(!this.shadowRoot){this.attachShadow({mode:'open'});
       this.shadowRoot.addEventListener('click',e=>this._click(e));}
     const c=this._c;
     const prevSc=this.shadowRoot.querySelector('.sheetScroll');
     const sy=prevSc?prevSc.scrollTop:0;
+    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     this.shadowRoot.innerHTML=`<style>${this._css()}</style><div class='wrap'>
       <div class='top'><span class='back' data-act='back'>\u2039&nbsp;Accueil</span></div>
       ${this._alertsHtml()}
@@ -346,6 +348,7 @@ class ClimGlassCard extends HTMLElement{
     </div>${this._settings?this._setSheetHtml():this._sheetHtml()}`;
     const newSc=this.shadowRoot.querySelector('.sheetScroll');
     if(newSc&&sy)newSc.scrollTop=sy;
+    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
     this._lastStruct=this._structSig();}
   _cycle(list,cur){if(!list||!list.length)return null;const i=list.indexOf(cur);return list[(i+1)%list.length];}
   _click(e){const t=e.target.closest('[data-act]');if(!t)return;
