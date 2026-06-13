@@ -251,9 +251,9 @@ class VoletsGlassCard extends HTMLElement{
 .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0}
 .chip.on .dot{background:#3ec3f7}
 .secTitle{font-size:18px;font-weight:700;color:#fff;margin:0 4px 12px}
-.secHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 4px;padding-right:4px}
+.secHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;padding-right:4px}
 .secHead .secTitle{margin:0 4px 0}
-.secBtns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.secBtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .secBtn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:14px;font-size:13px;font-weight:600;border:1px solid var(--stroke);background:rgba(255,255,255,.08);color:var(--txt2);cursor:pointer;user-select:none;white-space:nowrap;transition:.15s}
 .secBtn:active{transform:scale(.95)}
 .secBtn.open{background:rgba(111,220,255,.13);border-color:rgba(111,220,255,.4);color:var(--cool)}
