@@ -1,4 +1,4 @@
-/* pac-glass-card v6 — fix scroll page (ne remonte plus au clic) + hero responsive iPhone (Extérieur en ligne secondaire) ; vue Pompe à chaleur Liquid Glass — réglages MiGo · sélecteur Arrêt/Auto/Manuel (garde-fou Auto) · fixes: fp current_temperature, COP de secours bridé, anti-écritures redondantes, askAuto nettoyé, consigne ≤0 → "–", automation boost en config, CSS purgé */
+/* pac-glass-card v7 — glisser vers le bas pour fermer la fenêtre (swipe-to-dismiss) ; fix scroll page (ne remonte plus au clic) + hero responsive iPhone (Extérieur en ligne secondaire) ; vue Pompe à chaleur Liquid Glass — réglages MiGo · sélecteur Arrêt/Auto/Manuel (garde-fou Auto) · fixes: fp current_temperature, COP de secours bridé, anti-écritures redondantes, askAuto nettoyé, consigne ≤0 → "–", automation boost en config, CSS purgé */
 class PacGlassCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._askAuto=null;this._last='';this._pend={};}
   setConfig(cfg){
@@ -119,6 +119,7 @@ class PacGlassCard extends HTMLElement{
       <div class='boostRow'>${boostFlag?`<div class='boostBtn stop' data-act='bstop'>Arr\u00eater le boost</div>`:`<div class='boostBtn' data-act='blaunch' data-k='${r.key}'>\u26a1 Lancer un boost</div>`}</div>
     </div>`;}
   _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
+  _attachSheetSwipe(){const sheet=this.shadowRoot.querySelector('.sheet');if(!sheet)return;const scrim=this.shadowRoot.querySelector('.scrim');const grab=sheet.querySelector('.grab');if(grab&&getComputedStyle(grab).display==='none')return;const scrollEl=sheet.querySelector('.sheetScroll')||sheet;let y0=0,sc0=0,dy=0,active=false,grabbed=false;sheet.addEventListener('touchstart',ev=>{if(ev.touches.length!==1)return;y0=ev.touches[0].clientY;sc0=scrollEl.scrollTop;dy=0;active=false;grabbed=!!(grab&&(ev.target===grab||(ev.target.closest&&ev.target.closest('.sheetHead'))));sheet.style.transition='none';if(scrim)scrim.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)return;const d=ev.touches[0].clientY-y0;if(!active){if(d>4&&(sc0<=0||grabbed))active=true;else return;}dy=d>0?d:0;sheet.style.transform='translateY('+dy+'px)';if(scrim)scrim.style.opacity=String(Math.max(0,1-dy/400));if(ev.cancelable)ev.preventDefault();},{passive:false});const end=()=>{sheet.style.transition='';if(scrim)scrim.style.transition='';if(active&&dy>90){sheet.style.transform='translateY(100%)';if(scrim)scrim.style.opacity='0';setTimeout(()=>{this._sheet=false;this._settings=false;this._open=null;this._last='';this._render();},300);}else{sheet.style.transform='';if(scrim)scrim.style.opacity='';}active=false;dy=0;};sheet.addEventListener('touchend',end);sheet.addEventListener('touchcancel',end);}
   _render(){if(!this._h)return;
     const c=this._c;
     const psc=this._scroller();const py=psc?psc.scrollTop:0;
@@ -131,7 +132,8 @@ class PacGlassCard extends HTMLElement{
       <div class='grid'>${c.rooms.map(r=>this._tile(r)).join('')}</div>
     </div>${sheets}`;
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
-    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;}
+    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
+    this._attachSheetSwipe();}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
     if(act!=='mode'&&act!=='autoOk'&&this._askAuto){this._askAuto=null;this._last='';}
     if(act==='back'){this._nav(c.back);return;}

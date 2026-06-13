@@ -1,4 +1,4 @@
-/* solar-glass-card v21 — fix scroll page (ne remonte plus au clic) + hero mobile en 2x2 (Maison sans trait orphelin) ; tuiles Flux en lignes horizontales compactes (1 colonne) ; diagramme desktop 380 ; colonnes alignées en haut ; bandeau récap (mois, cumul, CO₂) ;
+/* solar-glass-card v22 — glisser vers le bas pour fermer la fenêtre (swipe-to-dismiss) ; fix scroll page (ne remonte plus au clic) + hero mobile en 2x2 (Maison sans trait orphelin) ; tuiles Flux en lignes horizontales compactes (1 colonne) ; diagramme desktop 380 ; colonnes alignées en haut ; bandeau récap (mois, cumul, CO₂) ;
    tuile Maison : taux de couverture solaire instantané (pv/maison) au lieu du
    taux d'autoconsommation (trompeur : 100 % dès que rien n'est exporté) ;
    tuile Réseau : puissance tirée en temps réel ajoutée devant les kWh du jour */
@@ -248,6 +248,7 @@ class SolarGlassCard extends HTMLElement{
     setPath('flow-res-mai',gridActive,grid);
     setPath('flow-bat-mai',batDischarge,Math.abs(batP));}
   _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
+  _attachSheetSwipe(){const sheet=this.shadowRoot.querySelector('.sheet');if(!sheet)return;const scrim=this.shadowRoot.querySelector('.scrim');const grab=sheet.querySelector('.grab');if(grab&&getComputedStyle(grab).display==='none')return;const scrollEl=sheet.querySelector('.sheetScroll')||sheet;let y0=0,sc0=0,dy=0,active=false,grabbed=false;sheet.addEventListener('touchstart',ev=>{if(ev.touches.length!==1)return;y0=ev.touches[0].clientY;sc0=scrollEl.scrollTop;dy=0;active=false;grabbed=!!(grab&&(ev.target===grab||(ev.target.closest&&ev.target.closest('.sheetHead'))));sheet.style.transition='none';if(scrim)scrim.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)return;const d=ev.touches[0].clientY-y0;if(!active){if(d>4&&(sc0<=0||grabbed))active=true;else return;}dy=d>0?d:0;sheet.style.transform='translateY('+dy+'px)';if(scrim)scrim.style.opacity=String(Math.max(0,1-dy/400));if(ev.cancelable)ev.preventDefault();},{passive:false});const end=()=>{sheet.style.transition='';if(scrim)scrim.style.transition='';if(active&&dy>90){sheet.style.transform='translateY(100%)';if(scrim)scrim.style.opacity='0';setTimeout(()=>{this._sheet=false;this._settings=false;this._open=null;this._last='';this._render();},300);}else{sheet.style.transform='';if(scrim)scrim.style.opacity='';}active=false;dy=0;};sheet.addEventListener('touchend',end);sheet.addEventListener('touchcancel',end);}
   _render(){if(!this._h)return;
     const c=this._c;
     const psc=this._scroller();const py=psc?psc.scrollTop:0;
@@ -273,6 +274,7 @@ class SolarGlassCard extends HTMLElement{
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
     this._patchFlows();
     if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
+    this._attachSheetSwipe();
     this._lastStruct=this._structSig();}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const c=this._c;
     if(act==='back'){this._nav(c.back);return;}
