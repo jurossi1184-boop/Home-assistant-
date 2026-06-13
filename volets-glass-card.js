@@ -115,15 +115,14 @@ class VoletsGlassCard extends HTMLElement{
       <div class='rName'>${r.name}</div>
       <div class='rSub'>${this._statusTxt(r)}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div></div>`;}
   _heroHtml(){const c=this._c;
-    const sej=this._s(c.fSej)==='on',eta=this._s(c.fEta)==='on';
-    const ombL=sej&&eta?'Ombrage \u00b7 s\u00e9jour + \u00e9tage':(sej?'Ombrage \u00b7 s\u00e9jour':(eta?'Ombrage \u00b7 \u00e9tage':'Ombrage inactif'));
-    const flags=[[sej||eta,ombL],[this._s(c.fConf)==='on','Confort ferm\u00e9']];
+    const sejF=this._s(c.fConf)==='on',etaF=this._s(c.fEta)==='on';
+    const flags=[[sejF,sejF?'S\u00e9jour ombrag\u00e9':'S\u00e9jour libre'],[etaF,etaF?'\u00c9tage ombrag\u00e9':'\u00c9tage libre']];
     const n=this._countOpen();const tot=this._rooms().length;
     const autoOn=this._s(c.auto)==='on';
     let actTxt;
-    if(sej&&eta)actTxt='Ombrage actif \u00b7 s\u00e9jour et \u00e9tage';
-    else if(sej)actTxt='Ombrage actif \u00b7 s\u00e9jour';
-    else if(eta)actTxt='Ombrage actif \u00b7 \u00e9tage';
+    if(sejF&&etaF)actTxt='Ombrage actif \u00b7 s\u00e9jour et \u00e9tage';
+    else if(sejF)actTxt='Ombrage actif \u00b7 s\u00e9jour';
+    else if(etaF)actTxt='Ombrage actif \u00b7 \u00e9tage';
     else actTxt=n>=tot?'Tout ouvert':(n<=0?'Tout ferm\u00e9':n+' ouvert'+(n>1?'s':'')+' sur '+tot);
     if(!autoOn)actTxt='Pilotage coup\u00e9 \u00b7 '+actTxt;
     return `<div class='hero'>
