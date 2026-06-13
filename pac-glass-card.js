@@ -42,6 +42,7 @@ class PacGlassCard extends HTMLElement{
   _a(e,a){const st=this._h&&this._h.states[e];return st?st.attributes[a]:null;}
   _n(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _setp(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return(isNaN(f)||f<=0)?'\u2013':f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
+  _circSuffix(e){const sp=this._setp(this._a(e,'temperature'));if(sp!=='\u2013')return ' \u00b7 '+sp+'\u00b0';const h=this._n(this._a(e,'current_humidity'));return h!=='\u2013'?' \u00b7 '+h+'\u2009%':'';}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
   _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag];
     return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.temperature!=null?st.attributes.temperature:'')+'|'+(st.attributes.current_temperature!=null?st.attributes.current_temperature:'')+'|'+(st.attributes.hvac_action||''):'x';}).join(';')+(this._open||'')+(this._askAuto||'')+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
@@ -80,8 +81,8 @@ class PacGlassCard extends HTMLElement{
     return `<div class='hero'>
       <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Pompe \u00e0 chaleur<span class='profil'>${pill}</span></div></div>
       <div class='hStats'>
-        <div class='stat'><div class='sv'>${this._n(this._a(c.rdc,'current_temperature'))}\u00b0</div><div class='sl'>RDC \u00b7 ${this._setp(this._a(c.rdc,'temperature'))}\u00b0</div></div>
-        <div class='stat'><div class='sv'>${this._n(this._a(c.etage,'current_temperature'))}\u00b0</div><div class='sl'>Chambres \u00b7 ${this._setp(this._a(c.etage,'temperature'))}\u00b0</div></div>
+        <div class='stat'><div class='sv'>${this._n(this._a(c.rdc,'current_temperature'))}\u00b0</div><div class='sl'>RDC${this._circSuffix(c.rdc)}</div></div>
+        <div class='stat'><div class='sv'>${this._n(this._a(c.etage,'current_temperature'))}\u00b0</div><div class='sl'>Chambres${this._circSuffix(c.etage)}</div></div>
         <div class='stat out'><div class='sv'>${this._n(this._s(c.ext))}\u00b0</div><div class='sl'>Ext\u00e9rieur</div></div>
       </div>
       <div class='sub'>${actTxt}</div></div>
