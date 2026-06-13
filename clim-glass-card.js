@@ -1,4 +1,4 @@
-/* clim-glass-card v43 — fix scroll : la page ne remonte plus en haut quand on clique sur un bouton après avoir scrollé (position de page mémorisée/restaurée autour du re-rendu). minuterie PAR PIÈCE (timer.clim_minuterie_<key>) : chaque clim a son propre décompte indépendant, lancer une minuterie sur une clim n'affecte plus les autres. Décompte "S'éteint à HH:MM" (fiche + tuile), Annuler ciblé. Extinction réelle par automation.clim_minuterie_echue. */
+/* clim-glass-card v44 — hero responsive : sur mobile RDC+Étage en 2 colonnes équilibrées, Extérieur en ligne secondaire sous un filet (fini l'orphelin qui débordait sur iPhone) ; 3 colonnes conservées sur desktop. fix scroll : la page ne remonte plus en haut quand on clique sur un bouton après avoir scrollé (position de page mémorisée/restaurée autour du re-rendu). minuterie PAR PIÈCE (timer.clim_minuterie_<key>) : chaque clim a son propre décompte indépendant, lancer une minuterie sur une clim n'affecte plus les autres. Décompte "S'éteint à HH:MM" (fiche + tuile), Annuler ciblé. Extinction réelle par automation.clim_minuterie_echue. */
 class ClimGlassCard extends HTMLElement{
   setConfig(c){
     this._c=Object.assign({
@@ -131,10 +131,11 @@ class ClimGlassCard extends HTMLElement{
 .gear:active{transform:scale(.92)}
 .hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600}
-.hStats{display:flex;gap:30px;flex-wrap:wrap;row-gap:14px}
-.stat{white-space:nowrap}
-.stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
-.stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
+.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:end}
+.stat{white-space:nowrap;min-width:0}
+.stat.out{grid-column:1 / -1;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);opacity:.7;display:flex;align-items:baseline;gap:9px}
+.stat.out .sv{font-size:21px;font-weight:600;line-height:1}
+.stat.out .sl{order:-1;margin-top:0}
 .sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
 .sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -223,6 +224,10 @@ class ClimGlassCard extends HTMLElement{
 .hHead{margin-bottom:12px}
 .heroRow{margin-top:0;width:470px;flex-shrink:0;align-self:center}
 .sv{font-size:40px}
+.hStats{display:flex;gap:30px;align-items:flex-start}
+.stat.out{grid-column:auto;margin-top:0;padding-top:0;border-top:none;padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78;display:block}
+.stat.out .sv{font-size:26px}
+.stat.out .sl{order:0;margin-top:5px}
 .grid{grid-template-columns:repeat(4,1fr);gap:14px}
 .room{min-height:132px;padding:16px}
 .secTitle{font-size:20px;margin:6px 4px 14px}
