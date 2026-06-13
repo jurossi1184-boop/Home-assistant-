@@ -1,4 +1,4 @@
-/* accueil-glass-card v26 — fix scroll page (ne remonte plus au clic) ; nettoyage + fix palette hero (hex) + code mort purgé
+/* accueil-glass-card v27 — glisser vers le bas pour fermer les pop-ups (détail météo + panneau auto) ; fix scroll page (ne remonte plus au clic) ; nettoyage + fix palette hero (hex) + code mort purgé
    Palette hero adaptative (toutes couleurs) · patch ciblé anti-sursaut · badges ⚡🔥📍
    Tokens : --glass .11 / --stroke .16 / --r 26px / blur 24px / max 1100px / @container 880px */
 class AccueilGlassCard extends HTMLElement{
@@ -369,6 +369,7 @@ class AccueilGlassCard extends HTMLElement{
     });
   }
   _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
+  _attachSheetSwipe(){const sheet=this.shadowRoot.querySelector('.sheet');if(!sheet)return;const veil=this.shadowRoot.querySelector('.veil');const head=sheet.querySelector('.shHead');const scrollEl=sheet.querySelector('.apList')||sheet;let y0=0,sc0=0,dy=0,active=false,grabbed=false;const EASE='transform .3s cubic-bezier(.2,.8,.3,1)';sheet.addEventListener('touchstart',ev=>{if(ev.touches.length!==1)return;y0=ev.touches[0].clientY;sc0=scrollEl.scrollTop;dy=0;active=false;grabbed=!!(head&&ev.target.closest&&ev.target.closest('.shHead')&&!ev.target.closest('.shX'));sheet.style.animation='none';sheet.style.transition='none';if(veil)veil.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)return;const d=ev.touches[0].clientY-y0;if(!active){if(d>4&&(sc0<=0||grabbed))active=true;else return;}dy=d>0?d:0;sheet.style.transform='translateY('+dy+'px)';if(veil)veil.style.opacity=String(Math.max(0,1-dy/400));if(ev.cancelable)ev.preventDefault();},{passive:false});const end=()=>{sheet.style.transition=EASE;if(veil)veil.style.transition='opacity .3s';if(active&&dy>90){sheet.style.transform='translateY(100%)';if(veil)veil.style.opacity='0';setTimeout(()=>{this._sheetDay=null;this._autoPanel=false;const m=this._model();this._lastStruct=this._structSig(m);this._render(m);},300);}else{sheet.style.transform='translateY(0)';if(veil)veil.style.opacity='';}active=false;dy=0;};sheet.addEventListener('touchend',end);sheet.addEventListener('touchcancel',end);}
   _render(m){
     if(!this._h)return;
     if(!m)m=this._model();
@@ -684,6 +685,7 @@ class AccueilGlassCard extends HTMLElement{
       });
     });
     if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
+    this._attachSheetSwipe();
   }
 }
 customElements.define('accueil-glass-card',AccueilGlassCard);
