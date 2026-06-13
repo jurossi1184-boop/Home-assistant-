@@ -1,4 +1,4 @@
-/* volets-glass-card v3 — hero responsive iPhone (Indice+Ouverts en 2 colonnes, Extérieur en ligne secondaire) + fix scroll page (ne remonte plus en haut au clic). vue Volets Liquid Glass (soeur de clim-glass-card) */
+/* volets-glass-card v4 — réglages : mentions intérieur/extérieur sur chaque seuil + correction libellé Mode doux (PV sous, pas au-dessus) + glisser vers le bas pour fermer la fenêtre (swipe-to-dismiss).  hero responsive iPhone (Indice+Ouverts en 2 colonnes, Extérieur en ligne secondaire) + fix scroll page (ne remonte plus en haut au clic). vue Volets Liquid Glass (soeur de clim-glass-card) */
 class VoletsGlassCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._sheet=false;this._last='';this._pend={};this._tmr={};}
   setConfig(cfg){
@@ -132,17 +132,18 @@ class VoletsGlassCard extends HTMLElement{
     <div class='sheet open sheetScroll'><div class='grab'></div>
       <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close' data-act='sclose'>Fermer</button></div>
       ${sh('#ffd60a','Ombrage automatique',icSun)}
-      <div class='ph'>Le s\u00e9jour s'ombrage <span class='nw'>au-dessus de ${num(c.ph,'\u00b0',0.5)}</span> <span class='nw'>et lib\u00e8re sous ${num(c.pb,'\u00b0',0.5)}</span></div>
-      <div class='ph'>Garde-fou \u00e9tage : <span class='nw'>chambres ombr\u00e9es si l'\u00e9tage d\u00e9passe ${num(c.gf,'\u00b0',0.5)}</span></div>
+      <div class='ph'>Le s\u00e9jour s'ombrage quand <span class='tin'>l'int\u00e9rieur du salon</span> <span class='nw'>d\u00e9passe ${num(c.ph,'\u00b0',0.5)}</span>, <span class='nw'>lib\u00e8re sous ${num(c.pb,'\u00b0',0.5)}</span></div>
+      <div class='ph'>Garde-fou \u00e9tage : chambres ombr\u00e9es quand <span class='tin'>l'int\u00e9rieur de l'\u00e9tage</span> <span class='nw'>d\u00e9passe ${num(c.gf,'\u00b0',0.5)}</span></div>
       ${sh('#6fdcff','Anticipation m\u00e9t\u00e9o',icCloud)}
-      <div class='ph'>\u00c0 9h, <span class='nw'>pr\u00e9-fermer si la pr\u00e9vision d\u00e9passe ${num(c.ant,'\u00b0',0.5)}</span></div>
+      <div class='ph'>\u00c0 9h, pr\u00e9-fermer si la <span class='tex'>pr\u00e9vision ext\u00e9rieure</span> <span class='nw'>d\u00e9passe ${num(c.ant,'\u00b0',0.5)}</span></div>
       <div class='ph'>Ciel consid\u00e9r\u00e9 couvert <span class='nw'>sous ${num(c.couv,'\u00a0W',10)}</span> de rayonnement</div>
       ${sh('#79e3c0','Mode doux',icLeaf)}
-      <div class='ph'>S'active si <span class='nw'>le PV d\u00e9passe ${num(c.dpv,'\u00a0W',10)}</span> <span class='nw'>et la temp\u00e9rature ${num(c.dtemp,'\u00b0',0.5)}</span></div>
+      <div class='ph'>Actif quand le PV est <span class='nw'>sous ${num(c.dpv,'\u00a0W',10)}</span> et la <span class='tex'>temp. ext\u00e9rieure</span> <span class='nw'>sous ${num(c.dtemp,'\u00b0',0.5)}</span></div>
       ${sh('var(--manual)','Soir et confort',icMoon)}
       <div class='ph'>Position confort thermique : <span class='nw'>${num(c.posC,'\u00a0%',5)} d'ouverture</span></div>
     </div>`;}
   _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
+  _attachSheetSwipe(){const sheet=this.shadowRoot.querySelector('.sheet');if(!sheet)return;const scrim=this.shadowRoot.querySelector('.scrim');const grab=sheet.querySelector('.grab');if(grab&&getComputedStyle(grab).display==='none')return;let y0=0,sc0=0,dy=0,active=false,grabbed=false;sheet.addEventListener('touchstart',ev=>{if(ev.touches.length!==1)return;y0=ev.touches[0].clientY;sc0=sheet.scrollTop;dy=0;active=false;grabbed=!!(grab&&(ev.target===grab||(ev.target.closest&&ev.target.closest('.sheetHead'))));sheet.style.transition='none';if(scrim)scrim.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)return;const d=ev.touches[0].clientY-y0;if(!active){if(d>4&&(sc0<=0||grabbed))active=true;else return;}dy=d>0?d:0;sheet.style.transform='translateY('+dy+'px)';if(scrim)scrim.style.opacity=String(Math.max(0,1-dy/400));if(ev.cancelable)ev.preventDefault();},{passive:false});const end=()=>{sheet.style.transition='';if(scrim)scrim.style.transition='';if(active&&dy>90){sheet.style.transform='translateY(100%)';if(scrim)scrim.style.opacity='0';setTimeout(()=>{this._sheet=false;this._open=null;this._last='';this._render();},300);}else{sheet.style.transform='';if(scrim)scrim.style.opacity='';}active=false;dy=0;};sheet.addEventListener('touchend',end);sheet.addEventListener('touchcancel',end);}
   _render(){if(!this._h)return;
     const c=this._c;
     const psc=this._scroller();const py=psc?psc.scrollTop:0;
@@ -159,7 +160,8 @@ class VoletsGlassCard extends HTMLElement{
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
     const sc=this.shadowRoot.querySelector('.sheetScroll');if(sc&&this._scTop)sc.scrollTop=this._scTop;
     if(sc)sc.addEventListener('scroll',()=>{this._scTop=sc.scrollTop;});
-    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;}
+    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
+    this._attachSheetSwipe();}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
     if(act==='back'){this._nav(c.back);return;}
     if(act==='sopen'){e.stopPropagation();this._sheet=true;this._scTop=0;this._last='';this._render();return;}
@@ -255,6 +257,8 @@ class VoletsGlassCard extends HTMLElement{
 .pv b{color:var(--cool);min-width:48px;text-align:center}
 .pBtn{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid var(--stroke);color:#f4f5ff;font-size:15px;cursor:pointer;flex-shrink:0}
 .nw{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.tin{color:#ffc89a;font-weight:600}
+.tex{color:#8fd0ff;font-weight:600}
 .sheetScroll{max-height:82vh;overflow-y:auto}
 @media(min-width:700px){
 .sheet{left:50%;right:auto;bottom:auto;top:50%;width:660px;max-width:92vw;border-radius:28px;border-bottom:1px solid var(--stroke);transform:translate(-50%,-46%) scale(.97);opacity:0;pointer-events:none;transition:.25s ease}
