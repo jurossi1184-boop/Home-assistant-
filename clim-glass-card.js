@@ -1,4 +1,4 @@
-/* clim-glass-card v45 — glisser vers le bas pour fermer la fenêtre (swipe-to-dismiss) ; hero responsive : sur mobile RDC+Étage en 2 colonnes équilibrées, Extérieur en ligne secondaire sous un filet (fini l'orphelin qui débordait sur iPhone) ; 3 colonnes conservées sur desktop. fix scroll : la page ne remonte plus en haut quand on clique sur un bouton après avoir scrollé (position de page mémorisée/restaurée autour du re-rendu). minuterie PAR PIÈCE (timer.clim_minuterie_<key>) : chaque clim a son propre décompte indépendant, lancer une minuterie sur une clim n'affecte plus les autres. Décompte "S'éteint à HH:MM" (fiche + tuile), Annuler ciblé. Extinction réelle par automation.clim_minuterie_echue. */
+/* clim-glass-card v42 — minuterie PAR PIÈCE (timer.clim_minuterie_<key>) : chaque clim a son propre décompte indépendant, lancer une minuterie sur une clim n'affecte plus les autres. Décompte "S'éteint à HH:MM" (fiche + tuile), Annuler ciblé. Extinction réelle par automation.clim_minuterie_echue. */
 class ClimGlassCard extends HTMLElement{
   setConfig(c){
     this._c=Object.assign({
@@ -131,11 +131,10 @@ class ClimGlassCard extends HTMLElement{
 .gear:active{transform:scale(.92)}
 .hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600}
-.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:end}
-.stat{white-space:nowrap;min-width:0}
-.stat.out{grid-column:1 / -1;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);opacity:.7;display:flex;align-items:baseline;gap:9px}
-.stat.out .sv{font-size:21px;font-weight:600;line-height:1}
-.stat.out .sl{order:-1;margin-top:0}
+.hStats{display:flex;gap:30px;flex-wrap:wrap;row-gap:14px}
+.stat{white-space:nowrap}
+.stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
+.stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
 .sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
 .sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -224,10 +223,6 @@ class ClimGlassCard extends HTMLElement{
 .hHead{margin-bottom:12px}
 .heroRow{margin-top:0;width:470px;flex-shrink:0;align-self:center}
 .sv{font-size:40px}
-.hStats{display:flex;gap:30px;align-items:flex-start}
-.stat.out{grid-column:auto;margin-top:0;padding-top:0;border-top:none;padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78;display:block}
-.stat.out .sv{font-size:26px}
-.stat.out .sl{order:0;margin-top:5px}
 .grid{grid-template-columns:repeat(4,1fr);gap:14px}
 .room{min-height:132px;padding:16px}
 .secTitle{font-size:20px;margin:6px 4px 14px}
@@ -269,7 +264,7 @@ class ClimGlassCard extends HTMLElement{
     const curT=this._n(this._s(r.temp||this._c.etage));
     let dval,dlab,steps;
     if(heat){const pd=this._pend[r.climate];dval=this._n(pd?pd.v:this._a(r.climate,'temperature'));dlab='Temp\u00e9rature de chauffe';steps=true;}
-    else if(cool){dval=cons;dlab=`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;steps=true;}
+    else if(cool){dval=cons;dlab=man?'Temp\u00e9rature de refroidissement':`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;steps=true;}
     else{dval=curT;dlab=r.temp?'Temp\u00e9rature du RDC':'Temp\u00e9rature de l\u2019\u00e9tage';steps=false;}
     const fan=this._a(r.climate,'fan_mode')||'\u2013';const swing=this._a(r.climate,'swing_mode')||'\u2013';
     const modes=['off','cool','heat','dry','fan_only'];
@@ -279,9 +274,9 @@ class ClimGlassCard extends HTMLElement{
     <div class='sheet open'><div class='grab'></div>
       <div class='sheetHead'><h2>${r.name}</h2><button class='close' data-act='close'>Fermer</button></div>
       <div class='dial'>
-        ${steps?`<button class='stepBtn' data-act='step' data-k='${r.key}' data-d='-0.5'>\u2212</button>`:''}
+        ${steps?`<button class='stepBtn' data-act='step' data-k='${r.key}' data-d='-1'>\u2212</button>`:''}
         <div class='target'><div class='tval${heat?' heatv':''}'>${dval}\u00b0</div><div class='tlab'>${dlab}</div></div>
-        ${steps?`<button class='stepBtn' data-act='step' data-k='${r.key}' data-d='0.5'>+</button>`:''}
+        ${steps?`<button class='stepBtn' data-act='step' data-k='${r.key}' data-d='1'>+</button>`:''}
       </div>
       <div class='modes'>${modes.map(m=>`<div class='mode ${st===m?(m==='heat'?'sel heatSel':'sel'):''}' data-act='mode' data-k='${r.key}' data-m='${m}'>${this._ml(m)}</div>`).join('')}</div>
       ${(()=>{const w=this._why(r);return w?`<div class='whyRow'>${w}</div>`:'';})()}
@@ -336,16 +331,14 @@ class ClimGlassCard extends HTMLElement{
       ${sh('rgba(255,255,255,.55)','Fen\u00eatres',icWin)}
       <div class='ph'>Apr\u00e8s une fen\u00eatre referm\u00e9e, <span class='nw'>la clim repart au bout de ${num(c.delai,'\u00a0s')}</span> dans le mode qu'elle avait</div>
     </div>`;}
-  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
-  _attachSheetSwipe(){const sheet=this.shadowRoot.querySelector('.sheet');if(!sheet)return;const scrim=this.shadowRoot.querySelector('.scrim');const grab=sheet.querySelector('.grab');if(grab&&getComputedStyle(grab).display==='none')return;const scrollEl=sheet.querySelector('.sheetScroll')||sheet;let y0=0,sc0=0,dy=0,active=false,grabbed=false;sheet.addEventListener('touchstart',ev=>{if(ev.touches.length!==1)return;y0=ev.touches[0].clientY;sc0=scrollEl.scrollTop;dy=0;active=false;grabbed=!!(grab&&(ev.target===grab||(ev.target.closest&&ev.target.closest('.sheetHead'))));sheet.style.transition='none';if(scrim)scrim.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)return;const d=ev.touches[0].clientY-y0;if(!active){if(d>4&&(sc0<=0||grabbed))active=true;else return;}dy=d>0?d:0;sheet.style.transform='translateY('+dy+'px)';if(scrim)scrim.style.opacity=String(Math.max(0,1-dy/400));if(ev.cancelable)ev.preventDefault();},{passive:false});const end=()=>{sheet.style.transition='';if(scrim)scrim.style.transition='';if(active&&dy>90){sheet.style.transform='translateY(100%)';if(scrim)scrim.style.opacity='0';setTimeout(()=>{this._sheet=false;this._settings=false;this._open=null;this._last='';this._render();},300);}else{sheet.style.transform='';if(scrim)scrim.style.opacity='';}active=false;dy=0;};sheet.addEventListener('touchend',end);sheet.addEventListener('touchcancel',end);}
   _render(){
     if(!this.shadowRoot){this.attachShadow({mode:'open'});
       this.shadowRoot.addEventListener('click',e=>this._click(e));}
     const c=this._c;
     const prevSc=this.shadowRoot.querySelector('.sheetScroll');
     const sy=prevSc?prevSc.scrollTop:0;
-    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     this.shadowRoot.innerHTML=`<style>${this._css()}</style><div class='wrap'>
+      <div class='top'><span class='back' data-act='back'>\u2039&nbsp;Accueil</span></div>
       ${this._alertsHtml()}
       ${this._heroHtml()}
       <div class='secTitle'>Pi\u00e8ces</div>
@@ -353,8 +346,6 @@ class ClimGlassCard extends HTMLElement{
     </div>${this._settings?this._setSheetHtml():this._sheetHtml()}`;
     const newSc=this.shadowRoot.querySelector('.sheetScroll');
     if(newSc&&sy)newSc.scrollTop=sy;
-    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
-    this._attachSheetSwipe();
     this._lastStruct=this._structSig();}
   _cycle(list,cur){if(!list||!list.length)return null;const i=list.indexOf(cur);return list[(i+1)%list.length];}
   _click(e){const t=e.target.closest('[data-act]');if(!t)return;
