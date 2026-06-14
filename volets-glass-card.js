@@ -325,9 +325,6 @@ class VoletsGlassCard extends HTMLElement{
   _css(){return `:host{display:block;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;color:#f4f5ff;--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--off:rgba(255,255,255,.35);--r:26px}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:1100px;margin:0 auto;container-type:inline-size}
-.top{display:flex;margin-bottom:14px}
-.back{display:inline-flex;align-items:center;gap:8px;padding:10px 18px 10px 14px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);font-size:14px;font-weight:600;color:var(--txt2);cursor:pointer;user-select:none}
-.back:active{transform:scale(.96)}
 .hero{position:relative;background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px}
 .gear{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid var(--stroke);color:var(--txt2);font-size:17px;cursor:pointer;user-select:none;flex-shrink:0}
 .gear:active{transform:scale(.92)}
