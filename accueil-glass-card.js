@@ -472,7 +472,7 @@ class AccueilGlassCard extends HTMLElement{
       :host{--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--heat:#ff9d6f;--okc:#7dffb2;--off:rgba(255,255,255,.35);--r:26px;display:block;color:#f4f5ff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;}
       .wrap{max-width:1100px;margin:0 auto;container-type:inline-size;}
       .hero{${heroBg}border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px;transition:background .3s,border-color .3s,box-shadow .3s;}
-      .eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt2);}
+      .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);}
       .hTitle{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;}
       .hSub{font-size:14px;color:var(--txt2);text-transform:capitalize;}
       .pastilles{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
@@ -521,7 +521,7 @@ class AccueilGlassCard extends HTMLElement{
       .cTxt{display:flex;flex-direction:column;min-width:0;}
       .cV{font-size:15px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;}
       .cL{font-size:11px;color:var(--txt2);white-space:nowrap;}
-      .secTitle{font-size:18px;font-weight:800;letter-spacing:-.01em;margin:20px 2px 10px;display:flex;align-items:center;gap:8px;}
+      .secTitle{font-size:18px;font-weight:700;color:#fff;margin:0 4px 12px;display:flex;align-items:center;gap:8px;}
       .alert{display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--stroke);border-radius:22px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:13px 16px;margin-bottom:10px;cursor:pointer;transition:transform .15s,background .15s;}
       .alert:active{transform:scale(.985);}
       .ai{width:22px;height:22px;flex:none;}
