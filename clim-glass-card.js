@@ -208,13 +208,10 @@ class ClimGlassCard extends HTMLElement{
 .manRow{padding:13px 16px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid var(--stroke);font-size:13.5px;font-weight:600;color:var(--txt2);cursor:pointer;line-height:1.5;margin-bottom:4px}
 .manRow.manOn{background:rgba(255,195,92,.13);border-color:rgba(255,195,92,.45);color:var(--manual)}
 .shead{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--txt2);margin-top:18px;padding:0 4px 9px;scroll-margin-top:74px}
-.setNav{position:sticky;top:-16px;z-index:5;display:flex;gap:10px;align-items:center;justify-content:flex-start;padding:8px 0 12px;margin:-2px 0 6px;background:linear-gradient(180deg,rgba(38,32,98,.96) 0%,rgba(38,32,98,.85) 70%,rgba(38,32,98,0) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-.setBack{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:var(--txt2);font-size:22px;font-weight:400;line-height:1;transition:.15s;user-select:none;flex-shrink:0}
-.setBack:active{transform:scale(.92)}
-.setNavBtn{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--stroke);transition:.18s;user-select:none;flex-shrink:0}
-.setNavBtn:active{transform:scale(.92)}
-.setNavBtn svg{width:17px;height:17px}
-.setNavBtn.active{background:rgba(255,255,255,.96);border-color:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(10,20,60,.3)}
+.setNav{position:sticky;top:-16px;z-index:5;display:flex;align-items:center;justify-content:flex-start;padding:8px 0 14px;margin:-2px 0 4px;background:linear-gradient(180deg,rgba(38,32,98,.96) 0%,rgba(38,32,98,.85) 70%,rgba(38,32,98,0) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.setBack{display:inline-flex;align-items:center;gap:6px;padding:8px 16px 8px 12px;border-radius:18px;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:var(--txt2);font-size:13.5px;font-weight:600;line-height:1;transition:.15s;user-select:none}
+.setBack:active{transform:scale(.96);background:rgba(255,255,255,.14)}
+.setBackArr{font-size:20px;font-weight:300;line-height:1;margin-top:-2px}
 .setMenu{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:8px 0 6px}
 .setMenuItem{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px 14px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid var(--stroke);cursor:pointer;transition:.18s;user-select:none;min-height:128px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .setMenuItem:active{transform:scale(.97);background:rgba(255,255,255,.14)}
@@ -351,11 +348,7 @@ class ClimGlassCard extends HTMLElement{
       ${menuItem('win','rgba(255,255,255,.7)',icWin,'Fen\u00eatres')}
     </div>`;
     const setNav=`<div class='setNav'>
-      <span class='setBack' data-act='snav' data-t=''>\u2039</span>
-      <span class='setNavBtn ${tab==='snow'?'active':''}' data-act='snav' data-t='snow' title='Froid automatique' style='color:#6fdcff'>${icSnow}</span>
-      <span class='setNavBtn ${tab==='drop'?'active':''}' data-act='snav' data-t='drop' title='D\u00e9shumidification' style='color:#79e3c0'>${icDrop}</span>
-      <span class='setNavBtn ${tab==='pow'?'active':''}' data-act='snav' data-t='pow' title='Allumage manuel' style='color:#ffc35c'>${icPow}</span>
-      <span class='setNavBtn ${tab==='win'?'active':''}' data-act='snav' data-t='win' title='Fen\u00eatres' style='color:rgba(255,255,255,.7)'>${icWin}</span>
+      <span class='setBack' data-act='snav' data-t=''><span class='setBackArr'>\u2039</span> Tous les r\u00e9glages</span>
     </div>`;
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
