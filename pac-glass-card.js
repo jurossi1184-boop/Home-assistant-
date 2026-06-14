@@ -32,6 +32,7 @@ class PacGlassCard extends HTMLElement{
       ecsSeuilFroid:'input_number.ecs_seuil_ballon_froid',
       ecsCibleMatin:'input_number.ecs_cible_matin',
       ecsPlancher:'input_number.plancher_ecs_dynamique',
+      ecsCibleBoost:'input_number.ecs_cible_boost',
       ecsHeater:'water_heater.alsace_domestic_hot_water_0',
       rooms:[
         {key:'rdc',name:'RDC',sub:'Plancher chauffant',climate:'climate.alsace_zone_rdc_circuit_1_climate',flow:'sensor.alsace_circuit_1_current_flow_temperature',boost:'script.lancer_boost_rdc'},
@@ -48,7 +49,7 @@ class PacGlassCard extends HTMLElement{
   _n(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _setp(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return(isNaN(f)||f<=0)?'\u2013':f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
-  _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag,c.ecsConsigne,c.ecsSeuilFroid,c.ecsCibleMatin,c.ecsPlancher,c.ecsHeater];
+  _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag,c.ecsConsigne,c.ecsSeuilFroid,c.ecsCibleMatin,c.ecsPlancher,c.ecsCibleBoost,c.ecsHeater];
     return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.temperature!=null?st.attributes.temperature:'')+'|'+(st.attributes.current_temperature!=null?st.attributes.current_temperature:'')+'|'+(st.attributes.hvac_action||'')+'|'+(st.attributes.preset_mode||''):'x';}).join(';')+(this._open||'')+'|s:'+this._settings+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
   _heating(e){return this._a(e,'hvac_action')==='heating';}
   _veto(cl){if(this._a(cl,'preset_mode')!=='boost')return null;const e=this._a(cl,'quick_veto_end_date_time');const d=e?new Date(e):null;return{end:(d&&!isNaN(d)&&d.getFullYear()>2000)?d:null};}
@@ -129,9 +130,10 @@ class PacGlassCard extends HTMLElement{
     <div class='sheet open sheetScroll'><div class='grab'></div>
       <div class='sheetHead'><h2>Réglages ECS</h2><button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       <div class='setSection'>
-        ${row('Consigne chauffe',c.ecsConsigne,"Température envoyée au ballon en mode Manual")}
+        ${row('Cible boost',c.ecsCibleBoost,"T° à atteindre quand tu lances un boost manuel ⚡")}
+        ${row('Consigne chauffe',c.ecsConsigne,"Consigne envoyée au ballon (60° pour bypasser le seuil Vaillant)")}
         ${row('Seuil ballon froid',c.ecsSeuilFroid,"À 2h, si tank ≤ ce seuil → déclenche la chauffe nuit")}
-        ${row('Cible matin',c.ecsCibleMatin,"T° à atteindre pour stopper la chauffe (suffit pour la douche)")}
+        ${row('Cible matin',c.ecsCibleMatin,"T° à atteindre pour stopper la chauffe nuit (douche)")}
         ${row('Plancher météo',c.ecsPlancher,"Plancher dynamique ajusté selon la météo")}
       </div>
       <div class='setNote'>Ces réglages contrôlent uniquement l'automation de chauffe nuit. Les autres automatisations ECS conservent leurs propres seuils.</div>
