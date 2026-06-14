@@ -338,8 +338,8 @@ class ClimGlassCard extends HTMLElement{
     const prevSc=this.shadowRoot.querySelector('.sheetScroll');
     const sy=prevSc?prevSc.scrollTop:0;
     this.shadowRoot.innerHTML=`<style>${this._css()}</style><div class='wrap'>
-      ${this._alertsHtml()}
       ${this._heroHtml()}
+      ${this._alertsHtml()}
       <div class='secTitle'>Pi\u00e8ces</div>
       <div class='grid'>${c.rooms.map(r=>this._roomHtml(r)).join('')}</div>
     </div>${this._settings?this._setSheetHtml():this._sheetHtml()}`;
