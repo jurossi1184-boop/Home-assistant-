@@ -208,12 +208,19 @@ class ClimGlassCard extends HTMLElement{
 .manRow{padding:13px 16px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid var(--stroke);font-size:13.5px;font-weight:600;color:var(--txt2);cursor:pointer;line-height:1.5;margin-bottom:4px}
 .manRow.manOn{background:rgba(255,195,92,.13);border-color:rgba(255,195,92,.45);color:var(--manual)}
 .shead{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--txt2);margin-top:18px;padding:0 4px 9px;scroll-margin-top:74px}
-.setNav{position:sticky;top:-16px;z-index:5;display:flex;gap:14px;justify-content:center;padding:10px 4px 12px;margin:-4px -4px 8px;background:linear-gradient(180deg,rgba(38,32,98,.96) 0%,rgba(38,32,98,.85) 70%,rgba(38,32,98,0) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-.setNavBtn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid var(--stroke);transition:.18s;user-select:none}
+.setNav{position:sticky;top:-16px;z-index:5;display:flex;gap:10px;align-items:center;justify-content:flex-start;padding:8px 0 12px;margin:-2px 0 6px;background:linear-gradient(180deg,rgba(38,32,98,.96) 0%,rgba(38,32,98,.85) 70%,rgba(38,32,98,0) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.setBack{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:var(--txt2);font-size:22px;font-weight:400;line-height:1;transition:.15s;user-select:none;flex-shrink:0}
+.setBack:active{transform:scale(.92)}
+.setNavBtn{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--stroke);transition:.18s;user-select:none;flex-shrink:0}
 .setNavBtn:active{transform:scale(.92)}
-.setNavBtn svg{width:20px;height:20px}
+.setNavBtn svg{width:17px;height:17px}
 .setNavBtn.active{background:rgba(255,255,255,.96);border-color:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(10,20,60,.3)}
-.setNavBtn.active svg{transform:scale(1.05)}
+.setMenu{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:8px 0 6px}
+.setMenuItem{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px 14px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid var(--stroke);cursor:pointer;transition:.18s;user-select:none;min-height:128px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.setMenuItem:active{transform:scale(.97);background:rgba(255,255,255,.14)}
+.menuIc{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border:1px solid var(--stroke)}
+.menuIc svg{width:24px;height:24px}
+.menuLab{font-size:14px;font-weight:600;color:#f4f5ff;text-align:center;line-height:1.3}
 .sGrp{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt2);margin:22px 6px 8px;opacity:.85}
 .sCard{background:rgba(255,255,255,.05);border:1px solid var(--stroke);border-radius:18px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:hidden}
 .sRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 16px;border-top:1px solid rgba(255,255,255,.06)}
@@ -335,15 +342,25 @@ class ClimGlassCard extends HTMLElement{
     const icPow=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M12 3.5v7'/><path d='M7.2 6.2a7 7 0 1 0 9.6 0'/></svg>`;
     const icWin=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='4' width='16' height='16' rx='2.5'/><path d='M12 4v16M4 12h16'/></svg>`;
     const tab=this._setTab;
+    const headTxt=tab?'R\u00e9glages':'R\u00e9glages';
+    const menuItem=(t,col,ic,lab)=>`<div class='setMenuItem' data-act='snav' data-t='${t}'><span class='menuIc' style='color:${col}'>${ic}</span><span class='menuLab'>${lab}</span></div>`;
+    const setMenu=`<div class='setMenu'>
+      ${menuItem('snow','#6fdcff',icSnow,'Froid automatique')}
+      ${menuItem('drop','#79e3c0',icDrop,'D\u00e9shumidification')}
+      ${menuItem('pow','#ffc35c',icPow,'Allumage manuel')}
+      ${menuItem('win','rgba(255,255,255,.7)',icWin,'Fen\u00eatres')}
+    </div>`;
+    const setNav=`<div class='setNav'>
+      <span class='setBack' data-act='snav' data-t=''>\u2039</span>
+      <span class='setNavBtn ${tab==='snow'?'active':''}' data-act='snav' data-t='snow' title='Froid automatique' style='color:#6fdcff'>${icSnow}</span>
+      <span class='setNavBtn ${tab==='drop'?'active':''}' data-act='snav' data-t='drop' title='D\u00e9shumidification' style='color:#79e3c0'>${icDrop}</span>
+      <span class='setNavBtn ${tab==='pow'?'active':''}' data-act='snav' data-t='pow' title='Allumage manuel' style='color:#ffc35c'>${icPow}</span>
+      <span class='setNavBtn ${tab==='win'?'active':''}' data-act='snav' data-t='win' title='Fen\u00eatres' style='color:rgba(255,255,255,.7)'>${icWin}</span>
+    </div>`;
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
-      <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close' data-act='sclose'>Fermer</button></div>
-      <div class='setNav'>
-        <span class='setNavBtn ${tab==='snow'?'active':''}' data-act='snav' data-t='snow' title='Froid automatique' style='color:#6fdcff'>${icSnow}</span>
-        <span class='setNavBtn ${tab==='drop'?'active':''}' data-act='snav' data-t='drop' title='D\u00e9shumidification' style='color:#79e3c0'>${icDrop}</span>
-        <span class='setNavBtn ${tab==='pow'?'active':''}' data-act='snav' data-t='pow' title='Allumage manuel' style='color:#ffc35c'>${icPow}</span>
-        <span class='setNavBtn ${tab==='win'?'active':''}' data-act='snav' data-t='win' title='Fen\u00eatres' style='color:rgba(255,255,255,.7)'>${icWin}</span>
-      </div>
+      <div class='sheetHead'><h2>${headTxt}</h2><button class='close' data-act='sclose'>Fermer</button></div>
+      ${tab?setNav:setMenu}
       ${tab==='snow'?`${sh('#6fdcff','Froid automatique',icSnow,'snow')}
       ${sGrp('Consignes par pi\u00e8ce')}
       ${sCard(
@@ -412,7 +429,7 @@ class ClimGlassCard extends HTMLElement{
     const act=t.dataset.act;const h=this._h;const c=this._c;
     const room=k=>c.rooms.find(x=>x.key===k);
     if(act==='sopen'){this._settings=true;this._setTab=null;this._last='';this._render();return;}
-    if(act==='snav'){this._setTab=t.dataset.t;this._last='';this._render();return;}
+    if(act==='snav'){const nt=t.dataset.t;this._setTab=nt&&nt===this._setTab?null:(nt||null);this._last='';this._render();return;}
     if(act==='sclose'){this._settings=false;this._last='';this._render();return;}
     if(act==='gstep'){const ge=[c.rooms[1].cons,c.rooms[2].cons,c.rooms[3].cons];const gv=ge.map(en=>parseFloat(this._s(en))||20);const st2=parseFloat(this._a(ge[0],'step'))||0.5;const mn=parseFloat(this._a(ge[0],'min'));const mx=parseFloat(this._a(ge[0],'max'));let v=Math.max(...gv)+st2*parseInt(t.dataset.d);v=Math.min(mx,Math.max(mn,v));ge.forEach(en=>h.callService('input_number','set_value',{entity_id:en,value:v}));return;}
     if(act==='tstep'){const en=t.dataset.e;const v=(this._s(en)||'00:00:00').split(':');let m=parseInt(v[0])*60+parseInt(v[1])+parseInt(t.dataset.d);m=(m+1440)%1440;const hh=String(Math.floor(m/60)).padStart(2,'0'),mm=String(m%60).padStart(2,'0');h.callService('input_datetime','set_datetime',{entity_id:en,time:hh+':'+mm+':00'});return;}
