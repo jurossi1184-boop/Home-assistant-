@@ -176,12 +176,12 @@ class SolarGlassCard extends HTMLElement{
       <div class='rowNote'>Le solaire t'a économisé ${this._n(eco_m,2)} € ce mois-ci</div>`;}
     return `<div class='scrim open' data-act='rclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
-      <div class='sheetHead'><h2>${r.name}</h2><button class='close' data-act='rclose'>Fermer</button></div>
+      <div class='sheetHead'><h2>${r.name}</h2><button class='close closeX' data-act='rclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       ${body}</div>`;}
   _setSheetHtml(){const c=this._c;
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
-      <div class='sheetHead'><h2>Bilan solaire</h2><button class='close' data-act='sclose'>Fermer</button></div>
+      <div class='sheetHead'><h2>Bilan solaire</h2><button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       ${this._row("Production totale depuis l'installation",this._n(this._s(c.solCumul),0)+' kWh')}
       ${this._row('CO₂ évité',this._n(this._s(c.co2),0)+' kg')}
       ${this._row('Ce mois-ci',this._n(this._s(c.solM),1)+' kWh')}
@@ -336,6 +336,9 @@ class SolarGlassCard extends HTMLElement{
 .sheetHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .sheetHead h2{font-size:20px;font-weight:700}
 .close{font-size:14px;color:var(--txt2);background:none;border:none;font-family:inherit;padding:6px 10px;cursor:pointer}
+.closeX{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:#f4f5ff;transition:.15s}
+.closeX:hover{background:rgba(255,255,255,.14)}
+.closeX:active{transform:scale(.92);background:rgba(255,255,255,.18)}
 .dial{display:flex;align-items:center;justify-content:center;gap:22px;margin:4px 0 18px}
 .target{text-align:center}
 .tval{font-size:54px;font-weight:700;letter-spacing:-.03em;line-height:1;color:var(--cool)}
