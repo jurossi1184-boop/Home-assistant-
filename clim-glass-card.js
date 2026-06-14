@@ -141,7 +141,7 @@ class ClimGlassCard extends HTMLElement{
 .gear{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid var(--stroke);color:var(--txt2);font-size:17px;cursor:pointer;user-select:none;flex-shrink:0}
 .gear:active{transform:scale(.92)}
 .hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600}
+.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .hStats{display:flex;gap:30px;flex-wrap:wrap;row-gap:14px}
 .stat{white-space:nowrap}
 .stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
