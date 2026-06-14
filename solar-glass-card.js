@@ -367,6 +367,18 @@ class SolarGlassCard extends HTMLElement{
 .sheetScroll{max-height:78vh}
 .grab{display:none}
 }
+@container(max-width:480px){
+.hStats{gap:12px;row-gap:8px}
+.sv{font-size:22px}
+.stat.out .sv{font-size:18px}
+.stat.out{padding-left:10px}
+.sl{font-size:10px;letter-spacing:.08em;margin-top:3px}
+.sub{font-size:13px;margin-top:10px}
+.eyebrow{font-size:12px}
+.profil{font-size:10px;padding:3px 8px}
+.hero{min-height:200px;padding:16px}
+.heroRow{margin-top:12px;gap:8px}
+}
 @container(min-width:880px){
 .hero{display:flex;align-items:center;justify-content:space-between;gap:32px;padding:24px 28px;min-height:186px;box-sizing:border-box}
 .gear{position:absolute;top:16px;right:18px}
