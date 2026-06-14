@@ -624,6 +624,17 @@ class AccueilGlassCard extends HTMLElement{
       }
       @container (min-width:470px) and (max-width:580px){.chips{grid-template-columns:repeat(3,1fr);}}
       @container (max-width:380px){.chips{grid-template-columns:repeat(2,1fr);}}
+      @container (max-width:480px){
+        .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+        .act{padding:11px 12px;font-size:13px;justify-content:center;}
+        .chip{padding:10px 8px;}
+        .chip .cV{font-size:13px;}
+        .chip .cL{font-size:10px;}
+        .hTitle{font-size:24px;}
+        .hSub{font-size:13px;}
+        .pastilles{gap:6px;}
+        .pastille{font-size:11px;padding:4px 9px;}
+      }
     </style>
     <div class="wrap">
       <div class="hero">

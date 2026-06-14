@@ -206,11 +206,12 @@ class PacGlassCard extends HTMLElement{
 .grab{display:none}
 }
 @container(max-width:480px){
-.hStats{gap:14px;row-gap:8px}
-.sv{font-size:26px}
+.hStats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;row-gap:8px}
+.stat{min-width:0;overflow:hidden}
+.stat .sv{font-size:24px}
 .stat.out .sv{font-size:20px}
-.stat.out{padding-left:12px}
-.sl{font-size:10px;letter-spacing:.08em;margin-top:3px}
+.stat.out{padding-left:10px}
+.sl{font-size:10px;letter-spacing:.06em;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sub{font-size:13px;margin-top:10px}
 .eyebrow{font-size:12px}
 .profil{font-size:10px;padding:3px 8px}
