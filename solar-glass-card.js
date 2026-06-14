@@ -179,14 +179,21 @@ class SolarGlassCard extends HTMLElement{
       <div class='sheetHead'><h2>${r.name}</h2><button class='close closeX' data-act='rclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       ${body}</div>`;}
   _setSheetHtml(){const c=this._c;
+    const srow=(lab,val)=>`<div class='sRow'><div class='sLab'>${lab}</div><div class='sCtrl'><b class='sVal'>${val}</b></div></div>`;
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
       <div class='sheetHead'><h2>Bilan solaire</h2><button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
-      ${this._row("Production totale depuis l'installation",this._n(this._s(c.solCumul),0)+' kWh')}
-      ${this._row('CO₂ évité',this._n(this._s(c.co2),0)+' kg')}
-      ${this._row('Ce mois-ci',this._n(this._s(c.solM),1)+' kWh')}
-      ${this._row('Économie du mois (vs sans solaire)',this._n(this._f(c.coutSansM)-this._f(c.coutM),2)+' €')}
-      <div class='rowNote'>Données Jackery (production, batterie) et Shelly Pro 3EM (réseau) · coûts calculés par tes capteurs tarifaires</div>
+      <div class='sGrp'>Production cumulée</div>
+      <div class='sCard'>
+        ${srow("Depuis l'installation",this._n(this._s(c.solCumul),0)+' kWh')}
+        ${srow('Ce mois-ci',this._n(this._s(c.solM),1)+' kWh')}
+      </div>
+      <div class='sGrp'>Impact</div>
+      <div class='sCard'>
+        ${srow('CO₂ évité',this._n(this._s(c.co2),0)+' kg')}
+        ${srow('Économie du mois',this._n(this._f(c.coutSansM)-this._f(c.coutM),2)+' €')}
+      </div>
+      <div class='sNote'>Données Jackery (production, batterie) et Shelly Pro 3EM (réseau) · coûts calculés par tes capteurs tarifaires</div>
     </div>`;}
   _flowDiagramHtml(){
     const cSun='#ffb340',cGrid='#ff6b6b',cHome='#4fe3c2',cBat='#6fdcff';
@@ -339,6 +346,14 @@ class SolarGlassCard extends HTMLElement{
 .closeX{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:#f4f5ff;transition:.15s}
 .closeX:hover{background:rgba(255,255,255,.14)}
 .closeX:active{transform:scale(.92);background:rgba(255,255,255,.18)}
+.sGrp{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt2);margin:22px 6px 8px;opacity:.85}
+.sCard{background:rgba(255,255,255,.05);border:1px solid var(--stroke);border-radius:18px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:hidden}
+.sRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 16px;border-top:1px solid rgba(255,255,255,.06)}
+.sRow:first-child{border-top:none}
+.sLab{flex:1;min-width:0;font-size:14.5px;font-weight:600;color:#f4f5ff}
+.sCtrl{flex-shrink:0}
+.sVal{color:var(--cool);font-weight:700;font-size:15px}
+.sNote{font-size:12px;color:var(--txt2);padding:14px 6px 4px;line-height:1.5;opacity:.8;font-style:italic}
 .dial{display:flex;align-items:center;justify-content:center;gap:22px;margin:4px 0 18px}
 .target{text-align:center}
 .tval{font-size:54px;font-weight:700;letter-spacing:-.03em;line-height:1;color:var(--cool)}
