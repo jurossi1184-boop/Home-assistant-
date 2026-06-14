@@ -353,9 +353,9 @@ class VoletsGlassCard extends HTMLElement{
 .sRow:first-child{border-top:none}
 .sLab{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;font-size:14.5px;font-weight:600;color:#f4f5ff}
 .sHint{font-size:11.5px;font-weight:500;color:var(--txt2);line-height:1.4}
-.sCtrl{flex-shrink:0}
-.sCtrl .pv{margin:0}
-.sCtrl .pv b{color:var(--cool);min-width:54px;text-align:center;font-size:15px}
+.sCtrl{flex-shrink:0;width:148px;display:flex;justify-content:flex-end}
+.sCtrl .pv{margin:0;width:148px;justify-content:space-between;gap:0;align-items:center}
+.sCtrl .pv b{color:var(--cool);width:88px;text-align:center;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em}
 .sNote{font-size:12px;color:var(--txt2);padding:10px 6px 4px;line-height:1.5;opacity:.8;font-style:italic}
 .setNav{display:flex;align-items:center;justify-content:flex-start;padding:0 0 14px;margin:0}
 .setBack{display:inline-flex;align-items:center;gap:7px;padding:9px 18px 9px 13px;border-radius:18px;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:#f4f5ff;font-size:13.5px;font-weight:600;line-height:1;transition:.15s;user-select:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
