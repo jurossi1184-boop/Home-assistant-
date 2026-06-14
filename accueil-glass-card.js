@@ -1,4 +1,4 @@
-/* accueil-glass-card v27 — glisser vers le bas pour fermer les pop-ups (détail météo + panneau auto) ; fix scroll page (ne remonte plus au clic) ; nettoyage + fix palette hero (hex) + code mort purgé
+/* accueil-glass-card v26 — bouton Annuler sur l'alerte Quick Veto PAC
    Palette hero adaptative (toutes couleurs) · patch ciblé anti-sursaut · badges ⚡🔥📍
    Tokens : --glass .11 / --stroke .16 / --r 26px / blur 24px / max 1100px / @container 880px */
 class AccueilGlassCard extends HTMLElement{
@@ -24,6 +24,7 @@ class AccueilGlassCard extends HTMLElement{
       free:'input_boolean.freecooling_nocturne_actif',
       svRdc:'sensor.alsace_zone_rdc_circuit_1_current_special_function',
       svEt:'sensor.alsace_zone_etage_circuit_0_current_special_function',
+      pacClimates:['climate.alsace_zone_rdc_circuit_1_climate','climate.alsace_zone_etage_circuit_0_climate'],
       fenParents:'binary_sensor.myggbett_door_window_sensor_porte',
       fenLeandre:'binary_sensor.myggbett_door_window_sensor_porte_2',
       fenLouise:'binary_sensor.myggbett_door_window_sensor_porte_3',
@@ -57,6 +58,10 @@ class AccueilGlassCard extends HTMLElement{
       ],
       coverEntities:['cover.chambre_2','cover.chambre_3','cover.chambre_leandre','cover.cuisine','cover.salon_devant','cover.sejour_jardin','cover.terrasse'],
       manuelVolets:['input_boolean.volets_manuel_terrasse','input_boolean.volets_manuel_cuisine','input_boolean.volets_manuel_sejour_jardin','input_boolean.volets_manuel_leandre'],
+      preCoolToggle:'input_boolean.clim_pre_refroidissement_soir_19h',
+      preCoolTarget:'input_number.clim_temperature_pre_refroidissement',
+      profilJournee:'input_select.profil_de_journee',
+      preCoolNightThreshold:20,
       socMin:20,
       socCritical:10,
       pvActiveThreshold:300,
@@ -70,7 +75,7 @@ class AccueilGlassCard extends HTMLElement{
   }
   getCardSize(){return 10;}
   set hass(h){
-    this._h=h;this._loadForecast();
+    this._h=h;this._loadForecast();this._loadHourly();
     const fp=this._fp();
     if(fp===this._last)return;
     this._last=fp;
@@ -104,11 +109,28 @@ class AccueilGlassCard extends HTMLElement{
     return cond;
   }
   _climAutoFlat(){const g=this._c.climAutomations||[];return g.reduce((acc,sec)=>acc.concat(sec.items||[]),[]);}
+  _preCoolRecommended(){
+    const c=this._c;
+    if(this._s(c.preCoolToggle)==='on')return null;
+    const profil=this._s(c.profilJournee);
+    if(profil!=='Canicule'&&profil!=='Chaud ensoleillé')return null;
+    const now=new Date();const h=now.getHours()+now.getMinutes()/60;
+    if(h<17||h>19.5)return null;
+    const etage=this._f(c.tIntEtage);const cible=this._f(c.preCoolTarget,20);
+    if(etage<=cible+1)return null;
+    if(!this._hf||!this._hf.length)return null;
+    const nightStart=new Date(now);nightStart.setHours(22,0,0,0);
+    const nightEnd=new Date(now);nightEnd.setDate(now.getDate()+1);nightEnd.setHours(6,0,0,0);
+    let minT=null;
+    this._hf.forEach(p=>{const t=new Date(p.datetime);if(t>=nightStart&&t<=nightEnd){const tp=p.temperature;if(tp!=null&&(minT===null||tp<minT))minT=tp;}});
+    if(minT===null||minT<c.preCoolNightThreshold)return null;
+    return {minT,etage,cible};
+  }
   _f(e,d){const v=parseFloat(this._s(e));return isNaN(v)?(d===undefined?0:d):v;}
   _fp(){
     const c=this._c;
     const r=(e,div)=>{const v=parseFloat(this._s(e));return isNaN(v)?'?':Math.round(v/(div||1));};
-    const raw=[c.meteo,c.sun,c.volets,c.clims,c.ecs,c.away,c.auto,c.free,c.svRdc,c.svEt,c.fenParents,c.fenLeandre,c.fenLouise,c.four,c.lv].concat(c.climEntities).concat(c.manuelVolets).concat(c.coverEntities).concat(this._climAutoFlat().map(a=>a.e)).map(e=>this._s(e));
+    const raw=[c.meteo,c.sun,c.volets,c.clims,c.ecs,c.away,c.auto,c.free,c.svRdc,c.svEt,c.fenParents,c.fenLeandre,c.fenLouise,c.four,c.lv,c.preCoolToggle,c.profilJournee].concat(c.climEntities).concat(c.manuelVolets).concat(c.coverEntities).concat(this._climAutoFlat().map(a=>a.e)).map(e=>this._s(e));
     const nums=[r(c.tIntRdc,0.1),r(c.tIntEtage,0.1),r(c.tExt,1),r(c.conso,20),r(c.pv,20),r(c.soc,1),r(c.batP,20),r(c.coutJ,0.01),r(c.ecsT,1)];
     return raw.join('|')+'#'+nums.join('|')+'#'+(this._fc?this._fc.map(d=>d.datetime+d.temperature).join(','):'');
   }
@@ -299,9 +321,15 @@ class AccueilGlassCard extends HTMLElement{
     if(soc<c.socMin)a.push({ic:'bat',cl:'aWarn',t:'Batterie faible',sub:`${soc.toFixed(0)}% · injection ${Math.abs(batP).toFixed(0)} W`,nav:c.navSolar});
     if(tMax!==null&&tMax>c.caniculeThreshold)a.push({ic:'fire',cl:'aWarn',t:'Canicule prévue',sub:`Demain jusqu'à ${Math.round(tMax)}°C`,nav:c.navVolets});
     if(this._s(c.free)==='on')a.push({ic:'fan',cl:'aCool',t:'Freecooling actif',sub:'Ouvre les fenêtres pour rafraîchir',nav:c.navClim});
+    const pc=this._preCoolRecommended();
+    if(pc)a.push({ic:'fan',cl:'aCool',t:'Pré-refroid recommandé',sub:`Nuit prévue ${pc.minT.toFixed(0)}° · étage ${pc.etage.toFixed(1)}°`,act:'precool'});
     if(this._s(c.away)==='on')a.push({ic:'away',cl:'aInfo',t:'Mode absent',sub:'PAC en éco',nav:c.navPac});
     const sv1=this._s(c.svRdc),sv2=this._s(c.svEt);
-    if((sv1&&sv1!=='None'&&sv1!=='unknown')||(sv2&&sv2!=='None'&&sv2!=='unknown'))a.push({ic:'fire',cl:'aHeat',t:'PAC — Quick Veto actif',sub:'Dérogation temporaire en cours',nav:c.navPac});
+    const qv1=sv1&&sv1!=='None'&&sv1!=='unknown',qv2=sv2&&sv2!=='None'&&sv2!=='unknown';
+    if(qv1||qv2){
+      const zones=[qv1?'RDC':null,qv2?'Étage':null].filter(Boolean).join(' + ');
+      a.push({ic:'fire',cl:'aHeat',t:'PAC — Quick Veto actif',sub:`Dérogation en cours · ${zones}`,nav:c.navPac,act:'qveto'});
+    }
     const fen=[[c.fenParents,'Parents'],[c.fenLeandre,'Léandre'],[c.fenLouise,'Louise']].filter(f=>this._s(f[0])==='on').map(f=>f[1]);
     if(fen.length)a.push({ic:'win',cl:'aWarn',t:fen.length>1?'Fenêtres ouvertes':'Fenêtre ouverte',sub:`Chambre${fen.length>1?'s':''} ${fen.join(', ')} — clim coupée`,nav:c.navClim});
     if(this._s(c.four)==='running')a.push({ic:'stove',cl:'aHeat',t:'Four en cuisson',sub:'En cours'});
@@ -368,13 +396,10 @@ class AccueilGlassCard extends HTMLElement{
       const p=day.querySelector('.fcP');if(p&&d.precipitation>0)p.innerHTML=`${this._ic('drop','fpi')}${d.precipitation.toFixed(d.precipitation<10?1:0)} mm`;
     });
   }
-  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
-  _attachSheetSwipe(){const sheet=this.shadowRoot.querySelector('.sheet');if(!sheet)return;const veil=this.shadowRoot.querySelector('.veil');const head=sheet.querySelector('.shHead');const scrollEl=sheet.querySelector('.apList')||sheet;let y0=0,sc0=0,dy=0,active=false,grabbed=false;const EASE='transform .3s cubic-bezier(.2,.8,.3,1)';sheet.addEventListener('touchstart',ev=>{if(ev.touches.length!==1)return;y0=ev.touches[0].clientY;sc0=scrollEl.scrollTop;dy=0;active=false;grabbed=!!(head&&ev.target.closest&&ev.target.closest('.shHead')&&!ev.target.closest('.shX'));sheet.style.animation='none';sheet.style.transition='none';if(veil)veil.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)return;const d=ev.touches[0].clientY-y0;if(!active){if(d>4&&(sc0<=0||grabbed))active=true;else return;}dy=d>0?d:0;sheet.style.transform='translateY('+dy+'px)';if(veil)veil.style.opacity=String(Math.max(0,1-dy/400));if(ev.cancelable)ev.preventDefault();},{passive:false});const end=()=>{sheet.style.transition=EASE;if(veil)veil.style.transition='opacity .3s';if(active&&dy>90){sheet.style.transform='translateY(100%)';if(veil)veil.style.opacity='0';setTimeout(()=>{this._sheetDay=null;this._autoPanel=false;const m=this._model();this._lastStruct=this._structSig(m);this._render(m);},300);}else{sheet.style.transform='translateY(0)';if(veil)veil.style.opacity='';}active=false;dy=0;};sheet.addEventListener('touchend',end);sheet.addEventListener('touchcancel',end);}
   _render(m){
     if(!this._h)return;
     if(!m)m=this._model();
     const c=this._c;
-    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     const {salut,dateFr,climOn,autoOn,awayOn,ecsOn,nVolets,climsTxt,alerts,palette,movingOpen,movingClose,chipVals,tileSubs,eyeTxt}=m;
 
     const fcHtml=(this._fc||[]).map((d,i)=>{
@@ -408,7 +433,7 @@ class AccueilGlassCard extends HTMLElement{
       <div class="alert ${a.cl} ${a.nav?'':'aStatic'}" data-nav="${a.nav||''}" data-ai="${i}">
         ${this._ic(a.ic,'ai')}
         <div class="aTxt"><span class="aT">${a.t}</span><span class="aS">${a.sub}</span></div>
-        ${a.nav?'<span class="aGo">›</span>':''}
+        ${a.act==='qveto'?'<button class="aBtn" data-qveto="1">Annuler</button>':a.act==='precool'?'<button class="aBtn" data-precool="1">Activer</button>':a.nav?'<span class="aGo">›</span>':''}
       </div>`).join('')
       :`<div class="alert aCalm">${this._ic('check','ai')}<div class="aTxt"><span class="aT">Tout est calme</span><span class="aS">Aucune alerte en cours</span></div></div>`;
 
@@ -447,7 +472,7 @@ class AccueilGlassCard extends HTMLElement{
       :host{--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--heat:#ff9d6f;--okc:#7dffb2;--off:rgba(255,255,255,.35);--r:26px;display:block;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;}
       .wrap{max-width:1100px;margin:0 auto;container-type:inline-size;padding:0 2px;}
       .hero{${heroBg}border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px;transition:background .3s,border-color .3s,box-shadow .3s;}
-      .eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt2);min-height:36px;}
+      .eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt2);}
       .hTitle{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;}
       .hSub{font-size:14px;color:var(--txt2);text-transform:capitalize;}
       .pastilles{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
@@ -504,6 +529,8 @@ class AccueilGlassCard extends HTMLElement{
       .aT{font-size:15px;font-weight:700;}
       .aS{font-size:12.5px;color:var(--txt2);}
       .aGo{font-size:22px;color:var(--off);font-weight:300;}
+      .aBtn{flex:none;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,93,93,.32);background:rgba(255,93,93,.14);color:#ff8a8a;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:transform .12s;}
+      .aBtn:active{transform:scale(.94);}
       .aHeat .ai{color:var(--heat);}
       .aCool .ai{color:var(--cool);}
       .aWarn .ai{color:var(--manual);}
@@ -665,6 +692,18 @@ class AccueilGlassCard extends HTMLElement{
         });
       });
     });
+    this.shadowRoot.querySelectorAll('[data-qveto]').forEach(el=>{
+      el.addEventListener('click',ev=>{
+        ev.stopPropagation();
+        (c.pacClimates||[]).forEach(e=>this._call('mypyllant','cancel_quick_veto',{entity_id:e}));
+      });
+    });
+    this.shadowRoot.querySelectorAll('[data-precool]').forEach(el=>{
+      el.addEventListener('click',ev=>{
+        ev.stopPropagation();
+        this._call('input_boolean','turn_on',{entity_id:c.preCoolToggle});
+      });
+    });
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{
       el.addEventListener('click',ev=>{
         ev.stopPropagation();
@@ -684,8 +723,6 @@ class AccueilGlassCard extends HTMLElement{
         else if(a==='vstop')this._coverSeq('stop_cover');
       });
     });
-    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
-    this._attachSheetSwipe();
   }
 }
 customElements.define('accueil-glass-card',AccueilGlassCard);
