@@ -522,6 +522,8 @@ class AccueilGlassCard extends HTMLElement{
       .cV{font-size:15px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;}
       .cL{font-size:11px;color:var(--txt2);white-space:nowrap;}
       .secTitle{font-size:18px;font-weight:700;color:#fff;margin:0 4px 12px;display:flex;align-items:center;gap:8px;}
+      .wrap > .secTitle{margin-top:24px;}
+      .duo{margin-bottom:6px;}
       .alert{display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--stroke);border-radius:22px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:13px 16px;margin-bottom:10px;cursor:pointer;transition:transform .15s,background .15s;}
       .alert:active{transform:scale(.985);}
       .ai{width:22px;height:22px;flex:none;}
@@ -604,7 +606,7 @@ class AccueilGlassCard extends HTMLElement{
       .rSub{font-size:12.5px;color:var(--txt2);}
       .room .sv{color:var(--off);}
       .duo{display:flex;flex-direction:column;}
-      .foot{height:8px;}
+      .foot{height:100px;}
       @container (min-width:880px){
         .hero{display:flex;align-items:center;justify-content:space-between;gap:32px;padding:18px 24px;min-height:150px;}
         .heroLeft{flex:none;}
@@ -618,6 +620,7 @@ class AccueilGlassCard extends HTMLElement{
         .fcIcPair{width:26px;height:26px;}
         .sv{width:34px;height:34px;}
         .secTitle{margin:12px 2px 8px;}
+        .wrap > .secTitle{margin-top:20px;}
         .hero{margin:4px 0 12px;}
         .duo{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;align-items:start;}
         .alert{margin-bottom:8px;padding:11px 14px;}
