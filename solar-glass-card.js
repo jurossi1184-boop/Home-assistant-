@@ -351,8 +351,8 @@ class SolarGlassCard extends HTMLElement{
 .sRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 16px;border-top:1px solid rgba(255,255,255,.06)}
 .sRow:first-child{border-top:none}
 .sLab{flex:1;min-width:0;font-size:14.5px;font-weight:600;color:#f4f5ff}
-.sCtrl{flex-shrink:0}
-.sVal{color:var(--cool);font-weight:700;font-size:15px}
+.sCtrl{flex-shrink:0;min-width:140px;display:flex;justify-content:flex-end}
+.sVal{color:var(--cool);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;letter-spacing:.01em;text-align:right}
 .sNote{font-size:12px;color:var(--txt2);padding:14px 6px 4px;line-height:1.5;opacity:.8;font-style:italic}
 .dial{display:flex;align-items:center;justify-content:center;gap:22px;margin:4px 0 18px}
 .target{text-align:center}
