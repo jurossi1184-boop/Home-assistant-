@@ -104,7 +104,7 @@ class ClimGlassCard extends HTMLElement{
     }
     return 'D\u00e9marrage imminent\u2026';}
   _statusTxt(r){const st=this._s(r.climate);if(st===null)return'Indisponible';if(st==='off')return'\u00c9teinte';
-    if(st==='dry'){const cur=this._a(r.climate,'current_temperature');if(cur!=null){const tgt=Math.round(parseFloat(cur))-1;return `D\u00e9shu \u00b7 ${this._n(cur)}\u00b0 \u2192 ${tgt}\u00b0`;}return 'D\u00e9shu';}
+    if(st==='dry'){const cur=this._a(r.climate,'current_temperature');if(cur!=null){const tgt=Math.round(parseFloat(cur))-1;return `D\u00e9shu \u2192 ${tgt}\u00b0`;}return 'D\u00e9shu';}
     const t=this._a(r.climate,'temperature');return this._ml(st)+(t?' \u2192 '+this._n(t)+'\u00b0':'');}
   _structSig(){const c=this._c;
     const chips=[this._s(c.auto),this._s(c.pre),this._s(c.deshu)].join(',');
