@@ -59,7 +59,7 @@ class ClimGlassCard extends HTMLElement{
     },c||{});
     this._open=null;
     this._settings=false;
-    this._setTab='snow';
+    this._setTab=null;
     this._pend={};
   }
   set hass(h){this._h=h;
@@ -319,7 +319,7 @@ class ClimGlassCard extends HTMLElement{
     const icDrop=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.5s6 6.8 6 11a6 6 0 0 1-12 0c0-4.2 6-11 6-11z'/></svg>`;
     const icPow=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M12 3.5v7'/><path d='M7.2 6.2a7 7 0 1 0 9.6 0'/></svg>`;
     const icWin=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='4' width='16' height='16' rx='2.5'/><path d='M12 4v16M4 12h16'/></svg>`;
-    const tab=this._setTab||'snow';
+    const tab=this._setTab;
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
       <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close' data-act='sclose'>Fermer</button></div>
@@ -329,7 +329,6 @@ class ClimGlassCard extends HTMLElement{
         <span class='setNavBtn ${tab==='pow'?'active':''}' data-act='snav' data-t='pow' title='Allumage manuel' style='color:#ffc35c'>${icPow}</span>
         <span class='setNavBtn ${tab==='win'?'active':''}' data-act='snav' data-t='win' title='Fen\u00eatres' style='color:rgba(255,255,255,.7)'>${icWin}</span>
       </div>
-      <div class='manRow ${this._s(c.vac)==='on'?'manOn':''}' data-act='chip' data-e='${c.vac}'>${this._s(c.vac)==='on'?'\ud83c\udfd6 Mode vacances ACTIF \u2014 clim suspendue, D\u00e9shu maintenu \u00b7 toucher pour d\u00e9sactiver':'\ud83c\udfd6 Mode vacances \u00b7 toucher pour suspendre la clim (D\u00e9shu et volets restent actifs)'}</div>
       ${tab==='snow'?`${sh('#6fdcff','Froid automatique',icSnow,'snow')}
       ${room('Le salon',c.rooms[0].cons)}
       ${room('La chambre des parents',c.rooms[1].cons)}
@@ -371,7 +370,7 @@ class ClimGlassCard extends HTMLElement{
   _click(e){const t=e.target.closest('[data-act]');if(!t)return;
     const act=t.dataset.act;const h=this._h;const c=this._c;
     const room=k=>c.rooms.find(x=>x.key===k);
-    if(act==='sopen'){this._settings=true;this._last='';this._render();return;}
+    if(act==='sopen'){this._settings=true;this._setTab=null;this._last='';this._render();return;}
     if(act==='snav'){this._setTab=t.dataset.t;this._last='';this._render();return;}
     if(act==='sclose'){this._settings=false;this._last='';this._render();return;}
     if(act==='gstep'){const ge=[c.rooms[1].cons,c.rooms[2].cons,c.rooms[3].cons];const gv=ge.map(en=>parseFloat(this._s(en))||20);const st2=parseFloat(this._a(ge[0],'step'))||0.5;const mn=parseFloat(this._a(ge[0],'min'));const mx=parseFloat(this._a(ge[0],'max'));let v=Math.max(...gv)+st2*parseInt(t.dataset.d);v=Math.min(mx,Math.max(mn,v));ge.forEach(en=>h.callService('input_number','set_value',{entity_id:en,value:v}));return;}
