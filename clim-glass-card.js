@@ -68,7 +68,7 @@ class ClimGlassCard extends HTMLElement{
     if(this._open!==null||this._settings||!this.shadowRoot||!this.shadowRoot.querySelector('.wrap')){this._render();return;}
     const st=this._structSig();
     if(st===this._lastStruct)this._patch();else{this._lastStruct=st;this._render();}}
-  _fp(){const c=this._c,h=this._h;const ids=[c.rdc,c.etage,c.ext,c.auto,c.pre];c.windows.forEach(w=>ids.push(w.entity));ids.push(c.sDeb,c.sFin,c.cDeb,c.cFin,c.bande,c.precoolT,c.delai,c.humRdc,c.humEtage,c.deshu,c.hygroH,c.hygroB,c.deshuDebSem,c.deshuDebWe,c.deshuFin,c.hygroHRdc,c.hygroBRdc,c.defChaudSalon,c.defChaudChambres,c.defFroid,c.antimixRdc,c.antimixEtage,c.antimixH,c.seuilExt,c.extPac,c.prevMax,c.vac,c.ecs,c.boost,c.freecool,c.profil,c.cielCouvert,c.ombrageSejour,c.conso,c.seuilConso,c.pilotageAuto);c.rooms.forEach(r=>ids.push(r.climate,r.manual,r.cons,r.timer));
+  _fp(){const c=this._c,h=this._h;const ids=[c.rdc,c.etage,c.ext,c.auto,c.pre];c.windows.forEach(w=>ids.push(w.entity));ids.push(c.sDeb,c.sFin,c.cDeb,c.cFin,c.bande,c.precoolT,c.delai,c.humRdc,c.humEtage,c.deshu,c.hygroH,c.hygroB,c.deshuDebSem,c.deshuDebWe,c.deshuFin,c.hygroHRdc,c.hygroBRdc,c.defChaudSalon,c.defChaudChambres,c.defFroid,c.antimixRdc,c.antimixEtage,c.antimixH,c.seuilExt,c.extPac,c.prevMax,c.vac,c.ecs,c.boost,c.freecool,c.profil,c.cielCouvert,c.ombrageSejour,c.conso,c.seuilConso,c.pilotageAuto);c.rooms.forEach(r=>{ids.push(r.climate,r.manual,r.cons,r.timer);if(r.temp)ids.push(r.temp);});
     return ids.map(i=>{const s=h.states[i];if(!s)return'x';const a=s.attributes;return s.state+'|'+(a.current_temperature??'')+'|'+(a.temperature??'')+'|'+(a.fan_mode??'')+'|'+(a.swing_mode??'')+'|'+(a.finishes_at??'');}).join(';')+'|o:'+this._open+'|s:'+this._settings+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
   _s(id){const s=this._h.states[id];return s?s.state:null;}
   _a(id,k){const s=this._h.states[id];return s?s.attributes[k]:null;}
@@ -121,7 +121,7 @@ class ClimGlassCard extends HTMLElement{
       heta:`${this._n(this._s(c.etage))}\u00b0`,hetah:`${this._n(this._s(c.humEtage))}\u2009%`,
       hext:`${this._n(this._s(c.ext))}\u00b0`,hsub:this._heroSub()
     };
-    c.rooms.forEach(r=>{const ct=this._a(r.climate,'current_temperature');v['rs'+r.key]=this._statusTxt(r)+(ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'');const w=this._why(r);v['rw'+r.key]=w||'';});
+    c.rooms.forEach(r=>{const ex=r.temp?parseFloat(this._s(r.temp)):NaN;const ct=!isNaN(ex)?ex:this._a(r.climate,'current_temperature');v['rs'+r.key]=this._statusTxt(r)+(ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'');const w=this._why(r);v['rw'+r.key]=w||'';});
     sr.querySelectorAll('.rWhy[data-p]').forEach(el=>{const k=el.getAttribute('data-p');if(v[k]!==undefined)el.style.display=v[k]?'block':'none';});
     sr.querySelectorAll('[data-p]').forEach(el=>{const k=el.getAttribute('data-p');if(v[k]!==undefined)el.textContent=v[k];});}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
@@ -330,7 +330,7 @@ class ClimGlassCard extends HTMLElement{
     return `<div class='room ${on?'on':''} ${heatOn?'heat':''} ${ecsBlk?'ecsBlocked':''}' data-act='open' data-k='${r.key}'>
       <div class='rTop'><span class='ric'>${ic}</span><span class='pwr ${ecsBlk?'pwrBlocked':''}' data-act='pwr' data-k='${r.key}'>${pwrIc}</span></div>
       <div><div class='rName'>${r.name}</div>
-      <div class='rSub'><span data-p='rs${r.key}'>${this._statusTxt(r)}${(()=>{const ct=this._a(r.climate,'current_temperature');return ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'';})()}</span>${tt?` \u00b7 <span class='badgeT'>\u23f1\u2009${tt}</span>`:''}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div>${(()=>{const w=this._why(r);return w?`<div class='rWhy' data-p='rw${r.key}'>${w}</div>`:`<div class='rWhy' data-p='rw${r.key}' style='display:none'></div>`;})()}</div>
+      <div class='rSub'><span data-p='rs${r.key}'>${this._statusTxt(r)}${(()=>{const ex=r.temp?parseFloat(this._s(r.temp)):NaN;const ct=!isNaN(ex)?ex:this._a(r.climate,'current_temperature');return ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'';})()}</span>${tt?` \u00b7 <span class='badgeT'>\u23f1\u2009${tt}</span>`:''}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div>${(()=>{const w=this._why(r);return w?`<div class='rWhy' data-p='rw${r.key}'>${w}</div>`:`<div class='rWhy' data-p='rw${r.key}' style='display:none'></div>`;})()}</div>
     </div>`;}
   _sheetHtml(){const r=this._c.rooms.find(x=>x.key===this._open);
     if(!r)return`<div class='scrim' data-act='close'></div><div class='sheet'></div>`;
@@ -340,12 +340,14 @@ class ClimGlassCard extends HTMLElement{
     const heat=st==='heat';
     const cool=st==='cool';
     const bekoT=this._a(r.climate,'current_temperature');
-    const curT=bekoT!=null?this._n(bekoT):this._n(this._s(r.temp||this._c.etage));
+    const exRaw=r.temp?parseFloat(this._s(r.temp)):NaN;
+    const extT=isNaN(exRaw)?null:exRaw;
+    const curT=extT!=null?this._n(extT):(bekoT!=null?this._n(bekoT):this._n(this._s(this._c.etage)));
     let dval,dlab,steps;
     if(heat){const pd=this._pend[r.climate];dval=this._n(pd?pd.v:this._a(r.climate,'temperature'));dlab='Temp\u00e9rature de chauffe';steps=true;}
     else if(cool){dval=cons;dlab=man?'Temp\u00e9rature de refroidissement':`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;steps=true;}
-    else if(st==='dry'){dval=bekoT!=null?this._n(bekoT):curT;dlab='D\u00e9shumidification \u00b7 sonde clim (consigne ignor\u00e9e par le Beko)';steps=false;}
-    else{dval=curT;dlab=bekoT!=null?'Temp\u00e9rature de la pi\u00e8ce (sonde clim)':(r.temp?'Temp\u00e9rature du RDC':'Temp\u00e9rature de l\u2019\u00e9tage');steps=false;}
+    else if(st==='dry'){dval=curT;dlab=extT!=null?'D\u00e9shumidification \u00b7 sonde PAC (consigne ignor\u00e9e par le Beko)':'D\u00e9shumidification \u00b7 sonde clim (consigne ignor\u00e9e par le Beko)';steps=false;}
+    else{dval=curT;dlab=extT!=null?(r.key==='salon'?'Temp\u00e9rature salon (sonde PAC)':'Temp\u00e9rature mesur\u00e9e'):(bekoT!=null?'Temp\u00e9rature de la pi\u00e8ce (sonde clim)':'Temp\u00e9rature de l\u2019\u00e9tage');steps=false;}
     const fan=this._a(r.climate,'fan_mode')||'\u2013';const swing=this._a(r.climate,'swing_mode')||'\u2013';
     const modes=['off','cool','heat','dry','fan_only'];
     const tt=this._tim(r);
