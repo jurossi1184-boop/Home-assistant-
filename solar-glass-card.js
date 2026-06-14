@@ -295,9 +295,9 @@ class SolarGlassCard extends HTMLElement{
 .stat{white-space:nowrap}
 .stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
 .stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
-.sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
+.sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25);display:inline-flex;align-items:flex-end;gap:1px}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
-.sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{margin-top:12px;font-size:14px;color:var(--txt2);line-height:1.35}
 .heroRow{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .chip{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 10px;border-radius:18px;font-size:14px;font-weight:600;background:rgba(255,255,255,.07);border:1px solid var(--stroke);color:var(--txt2);cursor:pointer;transition:.25s;user-select:none;white-space:nowrap}
 .chip.on{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.95);color:#0a7eb8;font-weight:700;box-shadow:0 6px 20px rgba(10,20,60,.22)}

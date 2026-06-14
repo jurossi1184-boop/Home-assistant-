@@ -334,9 +334,9 @@ class VoletsGlassCard extends HTMLElement{
 .stat{white-space:nowrap}
 .stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
 .stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
-.sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
+.sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25);display:inline-flex;align-items:flex-end;gap:1px}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
-.sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{margin-top:12px;font-size:14px;color:var(--txt2);line-height:1.35}
 .subSun{margin-top:4px;font-size:12.5px;color:var(--txt2);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .scenes{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
 .scene{flex:1 1 130px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-size:14px;font-weight:600;color:#f4f5ff;cursor:pointer;user-select:none;transition:.15s;white-space:nowrap}
