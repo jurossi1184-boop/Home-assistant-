@@ -214,6 +214,16 @@ class ClimGlassCard extends HTMLElement{
 .setNavBtn svg{width:20px;height:20px}
 .setNavBtn.active{background:rgba(255,255,255,.96);border-color:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(10,20,60,.3)}
 .setNavBtn.active svg{transform:scale(1.05)}
+.sGrp{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt2);margin:22px 6px 8px;opacity:.85}
+.sCard{background:rgba(255,255,255,.05);border:1px solid var(--stroke);border-radius:18px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:hidden}
+.sRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 16px;border-top:1px solid rgba(255,255,255,.06)}
+.sRow:first-child{border-top:none}
+.sLab{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;font-size:14.5px;font-weight:600;color:#f4f5ff}
+.sHint{font-size:11.5px;font-weight:500;color:var(--txt2);line-height:1.4}
+.sCtrl{flex-shrink:0}
+.sCtrl .pv{margin:0}
+.sCtrl .pv b{color:var(--cool);min-width:54px;text-align:center;font-size:15px}
+.sNote{font-size:12px;color:var(--txt2);padding:10px 6px 4px;line-height:1.5;opacity:.8;font-style:italic}
 .shic{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .shead+.ph{border-top:none;padding-top:4px}
 .ph{padding:13px 4px;border-top:1px solid rgba(255,255,255,.1);font-size:15px;line-height:1.7;display:flex;flex-wrap:wrap;align-items:center;column-gap:6px;row-gap:8px}
@@ -314,6 +324,11 @@ class ClimGlassCard extends HTMLElement{
     const gd=same?this._n(gv[0])+'\u00b0':'\u2014';
     const gc=same?this._n(Math.max(16,gv[0]-bm))+'\u00b0':'\u2014';
     const grp=`<div class='ph'><b>Tout l'\u00e9tage</b> (les 3 chambres) <span class='nw'>d\u00e9marre \u00e0 <span class='pv'><button class='pBtn' data-act='gstep' data-d='-1'>\u2212</button><b>${gd}</b><button class='pBtn' data-act='gstep' data-d='1'>+</button></span></span> <span class='nw'>et s'arr\u00eate \u00e0 <b class='cv'>${gc}</b></span></div>`;
+    const srow=(lab,ctrl,hint)=>`<div class='sRow'><div class='sLab'>${lab}${hint?`<span class='sHint'>${hint}</span>`:''}</div><div class='sCtrl'>${ctrl}</div></div>`;
+    const sCard=(body)=>`<div class='sCard'>${body}</div>`;
+    const sGrp=(title)=>`<div class='sGrp'>${title}</div>`;
+    const grpCtrl=`<span class='pv'><button class='pBtn' data-act='gstep' data-d='-1'>\u2212</button><b>${gd}</b><button class='pBtn' data-act='gstep' data-d='1'>+</button></span>`;
+    const grpHint=same?`S'arr\u00eate \u00e0 <b class='cv'>${gc}</b>`:'Valeurs diff\u00e9rentes entre les chambres';
     const sh=(col,txt,ic,id)=>`<div class='shead' id='sec_${id}'><span class='shic' style='color:${col}'>${ic}</span>${txt}</div>`;
     const icSnow=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M12 3l-2.2 2.2M12 3l2.2 2.2M12 21l-2.2-2.2M12 21l2.2-2.2'/></svg>`;
     const icDrop=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.5s6 6.8 6 11a6 6 0 0 1-12 0c0-4.2 6-11 6-11z'/></svg>`;
@@ -330,26 +345,52 @@ class ClimGlassCard extends HTMLElement{
         <span class='setNavBtn ${tab==='win'?'active':''}' data-act='snav' data-t='win' title='Fen\u00eatres' style='color:rgba(255,255,255,.7)'>${icWin}</span>
       </div>
       ${tab==='snow'?`${sh('#6fdcff','Froid automatique',icSnow,'snow')}
-      ${room('Le salon',c.rooms[0].cons)}
-      ${room('La chambre des parents',c.rooms[1].cons)}
-      ${room('La chambre de Louise',c.rooms[2].cons)}
-      ${room('La chambre de L\u00e9andre',c.rooms[3].cons)}
-      ${grp}
-      <div class='ph'>La clim <span class='nw'>refroidit de ${num(c.bande,'\u00b0')}</span> sous la temp\u00e9rature de d\u00e9marrage</div>
-      <div class='ph'>Le salon est g\u00e9r\u00e9 <span class='nw'>de ${tim(c.sDeb)}</span> <span class='nw'>\u00e0 ${tim(c.sFin)}</span>, les chambres <span class='nw'>de ${tim(c.cDeb)}</span> <span class='nw'>\u00e0 ${tim(c.cFin)}</span></div>
-      <div class='ph'>\u00c0 19h, <span class='nw'>pr\u00e9-refroidir les chambres \u00e0 ${num(c.precoolT,'\u00b0')}</span></div>
-      <div class='ph'>Anti va-et-vient : pas de froid auto si la PAC a chauff\u00e9 depuis moins de ${num(c.antimixH,'\u00a0h')}</div>
-      <div class='ph'>Le froid n'est autoris\u00e9 que si dehors d\u00e9passe ${num(c.seuilExt,'\u00b0')} \u2014 mesur\u00e9 ou pr\u00e9vu aujourd'hui</div>`:''}
+      ${sGrp('Consignes par pi\u00e8ce')}
+      ${sCard(
+        srow('Salon',num(c.rooms[0].cons,'\u00b0'),`S'arr\u00eate \u00e0 <b class='cv'>${cut(c.rooms[0].cons)}\u00b0</b>`)+
+        srow('Chambre Parents',num(c.rooms[1].cons,'\u00b0'),`S'arr\u00eate \u00e0 <b class='cv'>${cut(c.rooms[1].cons)}\u00b0</b>`)+
+        srow('Chambre Louise',num(c.rooms[2].cons,'\u00b0'),`S'arr\u00eate \u00e0 <b class='cv'>${cut(c.rooms[2].cons)}\u00b0</b>`)+
+        srow('Chambre L\u00e9andre',num(c.rooms[3].cons,'\u00b0'),`S'arr\u00eate \u00e0 <b class='cv'>${cut(c.rooms[3].cons)}\u00b0</b>`)+
+        srow('Tout l\u2019\u00e9tage',grpCtrl,grpHint)
+      )}
+      ${sGrp('Cr\u00e9neaux et seuils')}
+      ${sCard(
+        srow('Bande morte',num(c.bande,'\u00b0'),'Refroidit de cette valeur sous la consigne avant de couper')+
+        srow('Salon : d\u00e9but',tim(c.sDeb),'')+
+        srow('Salon : fin',tim(c.sFin),'')+
+        srow('Chambres : d\u00e9but',tim(c.cDeb),'')+
+        srow('Chambres : fin',tim(c.cFin),'')+
+        srow('Pr\u00e9-refroidir \u00e0 19h',num(c.precoolT,'\u00b0'),'Cible appliqu\u00e9e aux chambres en pr\u00e9-refroidissement')+
+        srow('Anti va-et-vient',num(c.antimixH,'\u00a0h'),'Pas de froid auto si la PAC a chauff\u00e9 r\u00e9cemment')+
+        srow('Seuil ext\u00e9rieur',num(c.seuilExt,'\u00b0'),'Froid autoris\u00e9 seulement si dehors d\u00e9passe cette valeur')
+      )}`:''}
       ${tab==='drop'?`${sh('#79e3c0','D\u00e9shumidification automatique',icDrop,'drop')}
-      <div class='ph'>Se lance <span class='nw'>au-dessus de ${num(c.hygroH,'\u00a0%')}</span> <span class='nw'>et s'arr\u00eate \u00e0 ${num(c.hygroB,'\u00a0%')}</span> d'humidit\u00e9 \u00e0 l'\u00e9tage</div>
-      <div class='ph'>Au salon (RDC) : <span class='nw'>au-dessus de ${num(c.hygroHRdc,'\u00a0%')}</span> <span class='nw'>et s'arr\u00eate \u00e0 ${num(c.hygroBRdc,'\u00a0%')}</span></div>
-      <div class='ph'>Cr\u00e9neau : <span class='nw'>d\u00e9but ${num(c.deshuDebSem,'h')} en semaine</span>, <span class='nw'>${num(c.deshuDebWe,'h')} le week-end</span> <span class='nw'>\u00b7 fin ${num(c.deshuFin,'h')}</span></div>
-      <div class='rowNote'>S\u00e9chage 10\u00a0min en ventilation \u00e0 l'arr\u00eat</div>`:''}
+      ${sGrp('Seuils d\u2019humidit\u00e9')}
+      ${sCard(
+        srow('\u00c9tage : d\u00e9marre au-dessus de',num(c.hygroH,'\u00a0%'),'')+
+        srow('\u00c9tage : s\u2019arr\u00eate \u00e0',num(c.hygroB,'\u00a0%'),'')+
+        srow('RDC : d\u00e9marre au-dessus de',num(c.hygroHRdc,'\u00a0%'),'')+
+        srow('RDC : s\u2019arr\u00eate \u00e0',num(c.hygroBRdc,'\u00a0%'),'')
+      )}
+      ${sGrp('Cr\u00e9neau horaire')}
+      ${sCard(
+        srow('D\u00e9but en semaine',num(c.deshuDebSem,'h'),'')+
+        srow('D\u00e9but le week-end',num(c.deshuDebWe,'h'),'')+
+        srow('Fin (tous les jours)',num(c.deshuFin,'h'),'')
+      )}
+      <div class='sNote'>S\u00e9chage 10 min en ventilation \u00e0 l\u2019arr\u00eat du cycle</div>`:''}
       ${tab==='pow'?`${sh('var(--manual)','Allumage manuel',icPow,'pow')}
-      <div class='ph'>Le chaud d\u00e9marre <span class='nw'>\u00e0 ${num(c.defChaudSalon,'\u00b0')} au salon</span> <span class='nw'>et \u00e0 ${num(c.defChaudChambres,'\u00b0')} dans les chambres</span></div>
-      <div class='ph'>Le froid d\u00e9marre <span class='nw'>\u00e0 ${num(c.defFroid,'\u00b0')}</span> dans toutes les pi\u00e8ces</div>`:''}
+      ${sGrp('Temp\u00e9ratures par d\u00e9faut')}
+      ${sCard(
+        srow('Chaud \u2014 Salon',num(c.defChaudSalon,'\u00b0'),'Cible appliqu\u00e9e quand tu allumes manuellement en chaud')+
+        srow('Chaud \u2014 Chambres',num(c.defChaudChambres,'\u00b0'),'Cible pour les 3 chambres en chaud manuel')+
+        srow('Froid \u2014 Toutes pi\u00e8ces',num(c.defFroid,'\u00b0'),'Cible appliqu\u00e9e en froid manuel')
+      )}`:''}
       ${tab==='win'?`${sh('rgba(255,255,255,.55)','Fen\u00eatres',icWin,'win')}
-      <div class='ph'>Apr\u00e8s une fen\u00eatre referm\u00e9e, <span class='nw'>la clim repart au bout de ${num(c.delai,'\u00a0s')}</span> dans le mode qu'elle avait</div>`:''}
+      ${sGrp('Reprise apr\u00e8s fermeture')}
+      ${sCard(
+        srow('D\u00e9lai de reprise',num(c.delai,'\u00a0s'),'Temps d\u2019attente avant de relancer la clim dans son mode pr\u00e9c\u00e9dent')
+      )}`:''}
     </div>`;}
   _render(){
     if(!this.shadowRoot){this.attachShadow({mode:'open'});
