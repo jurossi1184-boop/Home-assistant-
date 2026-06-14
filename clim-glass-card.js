@@ -208,10 +208,11 @@ class ClimGlassCard extends HTMLElement{
 .manRow{padding:13px 16px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid var(--stroke);font-size:13.5px;font-weight:600;color:var(--txt2);cursor:pointer;line-height:1.5;margin-bottom:4px}
 .manRow.manOn{background:rgba(255,195,92,.13);border-color:rgba(255,195,92,.45);color:var(--manual)}
 .shead{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--txt2);margin-top:18px;padding:0 4px 9px;scroll-margin-top:74px}
-.setNav{position:sticky;top:-16px;z-index:5;display:flex;align-items:center;justify-content:flex-start;padding:8px 0 14px;margin:-2px 0 4px;background:linear-gradient(180deg,rgba(38,32,98,.96) 0%,rgba(38,32,98,.85) 70%,rgba(38,32,98,0) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-.setBack{display:inline-flex;align-items:center;gap:6px;padding:8px 16px 8px 12px;border-radius:18px;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:var(--txt2);font-size:13.5px;font-weight:600;line-height:1;transition:.15s;user-select:none}
+.setNav{display:flex;align-items:center;justify-content:flex-start;padding:0 0 14px;margin:0}
+.setBack{display:inline-flex;align-items:center;gap:7px;padding:9px 18px 9px 13px;border-radius:18px;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:#f4f5ff;font-size:13.5px;font-weight:600;line-height:1;transition:.15s;user-select:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.setBack:hover{background:rgba(255,255,255,.1)}
 .setBack:active{transform:scale(.96);background:rgba(255,255,255,.14)}
-.setBackArr{font-size:20px;font-weight:300;line-height:1;margin-top:-2px}
+.setBackArr{font-size:18px;font-weight:400;line-height:1;color:var(--cool);margin-top:-1px}
 .setMenu{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:8px 0 6px}
 .setMenuItem{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px 14px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid var(--stroke);cursor:pointer;transition:.18s;user-select:none;min-height:128px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .setMenuItem:active{transform:scale(.97);background:rgba(255,255,255,.14)}
