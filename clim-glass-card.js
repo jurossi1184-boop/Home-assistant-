@@ -177,6 +177,9 @@ class ClimGlassCard extends HTMLElement{
 .sheetHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .sheetHead h2{font-size:20px;font-weight:700}
 .close{font-size:14px;color:var(--txt2);background:none;border:none;font-family:inherit;padding:6px 10px;cursor:pointer}
+.closeX{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:#f4f5ff;transition:.15s}
+.closeX:hover{background:rgba(255,255,255,.14)}
+.closeX:active{transform:scale(.92);background:rgba(255,255,255,.18)}
 .dial{display:flex;align-items:center;justify-content:center;gap:22px;margin:4px 0 18px}
 .stepBtn{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid var(--stroke);color:#f4f5ff;font-size:26px;font-weight:500;cursor:pointer}
 .target{text-align:center;min-width:110px}
@@ -301,7 +304,7 @@ class ClimGlassCard extends HTMLElement{
     const timHtml=st!=='off'?(tt!==null?`<div class='timRow'><span class='timOn'>\u23f1 S'\u00e9teint \u00e0 ${tt}</span><span class='timBtn timOff' data-act='timercancel' data-k='${r.key}'>Annuler</span></div>`:`<div class='timRow'><span class='timLab'>\u23f1 \u00c9teindre dans</span><span class='timBtn' data-act='timer' data-k='${r.key}' data-min='30'>30 min</span><span class='timBtn' data-act='timer' data-k='${r.key}' data-min='60'>1 h</span><span class='timBtn' data-act='timer' data-k='${r.key}' data-min='120'>2 h</span></div>`):'';
     return `<div class='scrim open' data-act='close'></div>
     <div class='sheet open'><div class='grab'></div>
-      <div class='sheetHead'><h2>${r.name}</h2><button class='close' data-act='close'>Fermer</button></div>
+      <div class='sheetHead'><h2>${r.name}</h2><button class='close closeX' data-act='close' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       <div class='dial'>
         ${steps?`<button class='stepBtn' data-act='step' data-k='${r.key}' data-d='-1'>\u2212</button>`:''}
         <div class='target'><div class='tval${heat?' heatv':''}'>${dval}\u00b0</div><div class='tlab'>${dlab}</div></div>
@@ -353,7 +356,7 @@ class ClimGlassCard extends HTMLElement{
     </div>`;
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
-      <div class='sheetHead'><h2>${headTxt}</h2><button class='close' data-act='sclose'>Fermer</button></div>
+      <div class='sheetHead'>${tab?'<span></span>':`<h2>${headTxt}</h2>`}<button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       ${tab?setNav:setMenu}
       ${tab==='snow'?`${sh('#6fdcff','Froid automatique',icSnow,'snow')}
       ${sGrp('Consignes par pi\u00e8ce')}
