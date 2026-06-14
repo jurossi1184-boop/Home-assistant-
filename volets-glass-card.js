@@ -186,7 +186,7 @@ class VoletsGlassCard extends HTMLElement{
     const targetRow=showTarget?`<div class='whyRow targetRow' data-act='goTarget' data-k='${r.key}'><span class='tDot'></span>Cible cerveau : <b>${target}\u00a0%</b> \u00b7 toucher pour s'y mettre</div>`:'';
     return `<div class='scrim open' data-act='rclose'></div>
     <div class='sheet open'><div class='grab'></div>
-      <div class='sheetHead'><h2>${r.name}</h2><button class='close' data-act='rclose'>Fermer</button></div>
+      <div class='sheetHead'><h2>${r.name}</h2><button class='close closeX' data-act='rclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       <div class='dial'>
         <button class='stepBtn' data-act='pstep' data-k='${r.key}' data-d='-10'>\u2212</button>
         <div class='target'><div class='tval'>${this._n(p)}\u00a0%</div><div class='tlab'>Position actuelle</div></div>
@@ -224,7 +224,7 @@ class VoletsGlassCard extends HTMLElement{
     </div>`;}).join('');
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
-      <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close' data-act='sclose'>Fermer</button></div>
+      <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       ${sh('#ffd60a','Ombrage automatique',icSun)}
       <div class='ph'>Le s\u00e9jour s'ombrage <span class='nw'>au-dessus de ${num(c.ph,'\u00b0',0.5)}</span> <span class='nw'>et lib\u00e8re sous ${num(c.pb,'\u00b0',0.5)}</span></div>
       <div class='ph'>Garde-fou \u00e9tage : <span class='nw'>chambres ombr\u00e9es si l'\u00e9tage d\u00e9passe ${num(c.gf,'\u00b0',0.5)}</span></div>
@@ -344,6 +344,9 @@ class VoletsGlassCard extends HTMLElement{
 .secBtn:active{transform:scale(.95)}
 .secBtn.open{background:rgba(111,220,255,.13);border-color:rgba(111,220,255,.4);color:var(--cool)}
 .secBtn.close{background:rgba(255,195,92,.13);border-color:rgba(255,195,92,.4);color:var(--manual)}
+.closeX{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:#f4f5ff;transition:.15s}
+.closeX:hover{background:rgba(255,255,255,.14)}
+.closeX:active{transform:scale(.92);background:rgba(255,255,255,.18)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .room{position:relative;background:var(--glass);border:1px solid var(--stroke);border-radius:22px;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);padding:14px;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;overflow:hidden;transition:background .25s,transform .15s,color .25s,box-shadow .25s}
 .room:active{transform:scale(.97)}
