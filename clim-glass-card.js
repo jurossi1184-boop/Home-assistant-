@@ -294,12 +294,13 @@ class ClimGlassCard extends HTMLElement{
     const cutv=this._n(Math.max(16,(parseFloat(this._s(r.cons))||20)-bmv));
     const heat=st==='heat';
     const cool=st==='cool';
-    const curT=this._n(this._s(r.temp||this._c.etage));
+    const bekoT=this._a(r.climate,'current_temperature');
+    const curT=bekoT!=null?this._n(bekoT):this._n(this._s(r.temp||this._c.etage));
     let dval,dlab,steps;
     if(heat){const pd=this._pend[r.climate];dval=this._n(pd?pd.v:this._a(r.climate,'temperature'));dlab='Temp\u00e9rature de chauffe';steps=true;}
     else if(cool){dval=cons;dlab=man?'Temp\u00e9rature de refroidissement':`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;steps=true;}
-    else if(st==='dry'){const cur=this._a(r.climate,'current_temperature');if(cur!=null){const tgt=Math.round(parseFloat(cur))-1;dval=this._n(cur);dlab=`D\u00e9shumidification \u00b7 sonde Beko \u2192 cible ${tgt}\u00b0`;}else{dval=curT;dlab='D\u00e9shumidification en cours';}steps=false;}
-    else{dval=curT;dlab=r.temp?'Temp\u00e9rature du RDC':'Temp\u00e9rature de l\u2019\u00e9tage';steps=false;}
+    else if(st==='dry'){if(bekoT!=null){const tgt=Math.round(parseFloat(bekoT))-1;dval=this._n(bekoT);dlab=`D\u00e9shumidification \u00b7 pi\u00e8ce ${this._n(bekoT)}\u00b0 (sonde clim) \u2192 cible ${tgt}\u00b0`;}else{dval=curT;dlab='D\u00e9shumidification en cours';}steps=false;}
+    else{dval=curT;dlab=bekoT!=null?'Temp\u00e9rature de la pi\u00e8ce (sonde clim)':(r.temp?'Temp\u00e9rature du RDC':'Temp\u00e9rature de l\u2019\u00e9tage');steps=false;}
     const fan=this._a(r.climate,'fan_mode')||'\u2013';const swing=this._a(r.climate,'swing_mode')||'\u2013';
     const modes=['off','cool','heat','dry','fan_only'];
     const tt=this._tim(r);
