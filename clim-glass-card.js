@@ -228,9 +228,9 @@ class ClimGlassCard extends HTMLElement{
 .sRow:first-child{border-top:none}
 .sLab{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;font-size:14.5px;font-weight:600;color:#f4f5ff}
 .sHint{font-size:11.5px;font-weight:500;color:var(--txt2);line-height:1.4}
-.sCtrl{flex-shrink:0}
-.sCtrl .pv{margin:0}
-.sCtrl .pv b{color:var(--cool);min-width:54px;text-align:center;font-size:15px}
+.sCtrl{flex-shrink:0;width:148px;display:flex;justify-content:flex-end}
+.sCtrl .pv{margin:0;width:148px;justify-content:space-between;gap:0;align-items:center}
+.sCtrl .pv b{color:var(--cool);width:88px;text-align:center;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em}
 .sNote{font-size:12px;color:var(--txt2);padding:10px 6px 4px;line-height:1.5;opacity:.8;font-style:italic}
 .shic{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .shead+.ph{border-top:none;padding-top:4px}
