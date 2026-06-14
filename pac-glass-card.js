@@ -1,6 +1,6 @@
 /* pac-glass-card v9 — vue Pompe à chaleur Liquid Glass — réglages MiGo · sélecteur Arrêt/Manuel · consigne optimiste (_pend) · tuile montre le mode · détection dérogation native (quick veto / preset boost) + annulation */
 class PacGlassCard extends HTMLElement{
-  constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._last='';this._pend={};}
+  constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._settings=false;this._last='';this._pend={};}
   setConfig(cfg){
     this._c=Object.assign({
       rdc:'climate.alsace_zone_rdc_circuit_1_climate',
@@ -28,6 +28,10 @@ class PacGlassCard extends HTMLElement{
       bRdcFlag:'input_boolean.boost_depuis_eteint_rdc',
       bEtageFlag:'input_boolean.boost_depuis_eteint_etage',
       back:'/dashboard-test/accueil',
+      ecsConsigne:'input_number.ecs_consigne_chauffe',
+      ecsSeuilFroid:'input_number.ecs_seuil_ballon_froid',
+      ecsCibleMatin:'input_number.ecs_cible_matin',
+      ecsPlancher:'input_number.plancher_ecs_dynamique',
       rooms:[
         {key:'rdc',name:'RDC',sub:'Plancher chauffant',climate:'climate.alsace_zone_rdc_circuit_1_climate',flow:'sensor.alsace_circuit_1_current_flow_temperature',boost:'script.lancer_boost_rdc'},
         {key:'etage',name:'Chambres',sub:'Radiateurs',climate:'climate.alsace_zone_etage_circuit_0_climate',flow:'sensor.alsace_circuit_0_current_flow_temperature',boost:'script.lancer_boost_etage'},
@@ -43,8 +47,8 @@ class PacGlassCard extends HTMLElement{
   _n(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _setp(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return(isNaN(f)||f<=0)?'\u2013':f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
-  _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag];
-    return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.temperature!=null?st.attributes.temperature:'')+'|'+(st.attributes.current_temperature!=null?st.attributes.current_temperature:'')+'|'+(st.attributes.hvac_action||'')+'|'+(st.attributes.preset_mode||''):'x';}).join(';')+(this._open||'')+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
+  _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag,c.ecsConsigne,c.ecsSeuilFroid,c.ecsCibleMatin,c.ecsPlancher];
+    return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.temperature!=null?st.attributes.temperature:'')+'|'+(st.attributes.current_temperature!=null?st.attributes.current_temperature:'')+'|'+(st.attributes.hvac_action||'')+'|'+(st.attributes.preset_mode||''):'x';}).join(';')+(this._open||'')+'|s:'+this._settings+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
   _heating(e){return this._a(e,'hvac_action')==='heating';}
   _veto(cl){if(this._a(cl,'preset_mode')!=='boost')return null;const e=this._a(cl,'quick_veto_end_date_time');const d=e?new Date(e):null;return{end:(d&&!isNaN(d)&&d.getFullYear()>2000)?d:null};}
   _hm(d){return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
@@ -118,9 +122,22 @@ class PacGlassCard extends HTMLElement{
       ${boostFlag?`<div class='boostBadge'>BOOST EN COURS \u2014 retour au mode pr\u00e9c\u00e9dent automatique</div>`:(vt?`<div class='boostBadge'>D\u00c9ROGATION EN COURS${vt.end?` \u00b7 jusqu'\u00e0 ${this._hm(vt.end)}`:''}</div>`:'')}
       <div class='boostRow'>${boostFlag?`<div class='boostBtn stop' data-act='bstop'>Arr\u00eater le boost</div>`:(vt?`<div class='boostBtn stop' data-act='vcancel' data-k='${r.key}'>Annuler la d\u00e9rogation</div>`:`<div class='boostBtn' data-act='blaunch' data-k='${r.key}'>\u26a1 Lancer un boost</div>`)}</div>
     </div>`;}
+  _sheetSettingsHtml(){const c=this._c;
+    const row=(label,en,hint)=>{const v=this._n(this._s(en));return `<div class='setRow'><div class='setLab'><span class='setName'>${label}</span><span class='setHint'>${hint}</span></div><div class='setCtrl'><button class='pBtn' data-act='nstep' data-e='${en}' data-d='-1'>−</button><b class='setVal'>${v}°</b><button class='pBtn' data-act='nstep' data-e='${en}' data-d='1'>+</button></div></div>`;};
+    return `<div class='scrim open' data-act='sclose'></div>
+    <div class='sheet open sheetScroll'><div class='grab'></div>
+      <div class='sheetHead'><h2>Réglages ECS</h2><button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
+      <div class='setSection'>
+        ${row('Consigne chauffe',c.ecsConsigne,"Température envoyée au ballon en mode Manual")}
+        ${row('Seuil ballon froid',c.ecsSeuilFroid,"À 2h, si tank ≤ ce seuil → déclenche la chauffe nuit")}
+        ${row('Cible matin',c.ecsCibleMatin,"T° à atteindre pour stopper la chauffe (suffit pour la douche)")}
+        ${row('Plancher météo',c.ecsPlancher,"Plancher dynamique ajusté selon la météo")}
+      </div>
+      <div class='setNote'>Ces réglages contrôlent uniquement l'automation de chauffe nuit. Les autres automatisations ECS conservent leurs propres seuils.</div>
+    </div>`;}
   _render(){if(!this._h)return;
     const c=this._c;
-    const sheets=this._open?this._sheetRoomHtml():'';
+    const sheets=this._settings?this._sheetSettingsHtml():(this._open?this._sheetRoomHtml():'');
     this.shadowRoot.innerHTML=`<style>${this._css()}</style>
     <div class='wrap'>
       ${this._heroHtml()}
@@ -130,7 +147,9 @@ class PacGlassCard extends HTMLElement{
     this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
     if(act==='back'){this._nav(c.back);return;}
-    if(act==='sopen'){this._nav('/pompe-a-chaleur');return;}
+    if(act==='sopen'){this._settings=true;this._last='';this._render();return;}
+    if(act==='sclose'){this._settings=false;this._last='';this._render();return;}
+    if(act==='nstep'){const en=t.dataset.e;const d=parseInt(t.dataset.d);const st=parseFloat(this._a(en,'step'))||1;const mn=parseFloat(this._a(en,'min'));const mx=parseFloat(this._a(en,'max'));const cur=parseFloat(this._s(en));const v=Math.min(mx,Math.max(mn,cur+d*st));this._h.callService('input_number','set_value',{entity_id:en,value:v});return;}
     if(act==='rclose'){this._open=null;this._last='';this._render();return;}
     if(act==='open'){this._open=t.dataset.k;this._last='';this._render();return;}
     const r=c.rooms.find(x=>x.key===t.dataset.k);
@@ -200,6 +219,18 @@ class PacGlassCard extends HTMLElement{
 .modeLab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt2);margin:2px 4px 8px}
 .tval.heatv{color:#ffb340}
 .rowNote{font-size:12px;color:var(--txt2);padding:6px 4px 4px;line-height:1.5}
+.sheetScroll{max-height:calc(100vh - 80px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.setSection{background:rgba(255,255,255,.04);border:1px solid var(--stroke);border-radius:18px;padding:4px 14px;margin-bottom:14px}
+.setRow{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid rgba(255,255,255,.08);gap:14px}
+.setRow:first-child{border-top:none}
+.setLab{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.setName{font-size:15px;font-weight:600;color:#f4f5ff}
+.setHint{font-size:12px;color:var(--txt2);line-height:1.3}
+.setCtrl{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.setVal{min-width:48px;text-align:center;font-size:17px;font-weight:700;color:var(--cool)}
+.pBtn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:#f4f5ff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1}
+.pBtn:active{transform:scale(.92)}
+.setNote{font-size:12px;color:var(--txt2);line-height:1.5;padding:4px 6px}
 @media(min-width:700px){
 .sheet{left:50%;right:auto;bottom:auto;top:50%;width:660px;max-width:92vw;border-radius:28px;border-bottom:1px solid var(--stroke);transform:translate(-50%,-46%) scale(.97);opacity:0;pointer-events:none;transition:.25s ease}
 .sheet.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
