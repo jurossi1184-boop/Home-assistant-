@@ -471,7 +471,7 @@ class AccueilGlassCard extends HTMLElement{
     <style>
       :host{--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--heat:#ff9d6f;--okc:#7dffb2;--off:rgba(255,255,255,.35);--r:26px;display:block;color:#f4f5ff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;}
       .wrap{max-width:1100px;margin:0 auto;container-type:inline-size;}
-      .hero{${heroBg}border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px;transition:background .3s,border-color .3s,box-shadow .3s;}
+      .hero{${heroBg}border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px;min-height:220px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;transition:background .3s,border-color .3s,box-shadow .3s;}
       .eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);}
       .hTitle{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;}
       .hSub{font-size:14px;color:var(--txt2);text-transform:capitalize;}
@@ -514,7 +514,7 @@ class AccueilGlassCard extends HTMLElement{
       .apSwOn{background:var(--okc);}
       .apKnob{position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s;}
       .apSwOn .apKnob{left:19.5px;}
-      .heroR{margin-top:14px;}
+      .heroRight{margin-top:14px;}
       .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
       .chip{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:12px 10px;min-width:0;}
       .ci{width:18px;height:18px;flex:none;color:var(--txt2);}
@@ -606,8 +606,8 @@ class AccueilGlassCard extends HTMLElement{
       .foot{height:8px;}
       @container (min-width:880px){
         .hero{display:flex;align-items:center;justify-content:space-between;gap:32px;padding:18px 24px;min-height:150px;}
-        .heroL{flex:none;}
-        .heroR{flex:1;margin-top:0;}
+        .heroLeft{flex:none;}
+        .heroRight{flex:1;margin-top:0;}
         .chips{grid-template-columns:repeat(3,1fr);}
         .chip{padding:9px 10px;}
         .grid{grid-template-columns:repeat(4,1fr);}
@@ -627,13 +627,13 @@ class AccueilGlassCard extends HTMLElement{
     </style>
     <div class="wrap">
       <div class="hero">
-        <div class="heroL">
+        <div class="heroLeft">
           <div class="eyebrow">${this._ic('home','pi')}Maison · <span class="eyeMeteo" data-fc="0">${eyeTxt}</span></div>
           <div class="hTitle">${salut}</div>
           <div class="hSub">${dateFr}</div>
           <div class="pastilles">${pastilles}</div>
         </div>
-        <div class="heroR"><div class="chips">${chips}</div></div>
+        <div class="heroRight"><div class="chips">${chips}</div></div>
       </div>
 
       <div class="duo">
