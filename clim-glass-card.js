@@ -104,6 +104,7 @@ class ClimGlassCard extends HTMLElement{
     }
     return 'D\u00e9marrage imminent\u2026';}
   _statusTxt(r){const st=this._s(r.climate);if(st===null)return'Indisponible';if(st==='off')return'\u00c9teinte';
+    if(st==='dry'){const cur=this._a(r.climate,'current_temperature');if(cur!=null){const tgt=Math.round(parseFloat(cur))-1;return `D\u00e9shu \u00b7 ${this._n(cur)}\u00b0 \u2192 ${tgt}\u00b0`;}return 'D\u00e9shu';}
     const t=this._a(r.climate,'temperature');return this._ml(st)+(t?' \u2192 '+this._n(t)+'\u00b0':'');}
   _structSig(){const c=this._c;
     const chips=[this._s(c.auto),this._s(c.pre),this._s(c.deshu)].join(',');
@@ -297,6 +298,7 @@ class ClimGlassCard extends HTMLElement{
     let dval,dlab,steps;
     if(heat){const pd=this._pend[r.climate];dval=this._n(pd?pd.v:this._a(r.climate,'temperature'));dlab='Temp\u00e9rature de chauffe';steps=true;}
     else if(cool){dval=cons;dlab=man?'Temp\u00e9rature de refroidissement':`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;steps=true;}
+    else if(st==='dry'){const cur=this._a(r.climate,'current_temperature');if(cur!=null){const tgt=Math.round(parseFloat(cur))-1;dval=this._n(cur);dlab=`D\u00e9shumidification \u00b7 sonde Beko \u2192 cible ${tgt}\u00b0`;}else{dval=curT;dlab='D\u00e9shumidification en cours';}steps=false;}
     else{dval=curT;dlab=r.temp?'Temp\u00e9rature du RDC':'Temp\u00e9rature de l\u2019\u00e9tage';steps=false;}
     const fan=this._a(r.climate,'fan_mode')||'\u2013';const swing=this._a(r.climate,'swing_mode')||'\u2013';
     const modes=['off','cool','heat','dry','fan_only'];
