@@ -1,6 +1,6 @@
 /* volets-glass-card v5 — scènes éditables depuis les réglages (nom + icône emoji + inclusion/exclusion par volet + position cible). Stockage : 4 input_text JSON. Statut cerveau intelligent, badge soleil, animation pastille fluide. */
 class VoletsGlassCard extends HTMLElement{
-  constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._sheet=false;this._last='';this._pend={};this._tmr={};}
+  constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._sheet=false;this._setTab=null;this._last='';this._pend={};this._tmr={};}
   setConfig(cfg){
     this._c=Object.assign({
       indice:'sensor.indice_surchauffe',
@@ -205,39 +205,66 @@ class VoletsGlassCard extends HTMLElement{
   _setSheetHtml(){const c=this._c;
     const N=e=>this._n(this._s(e));
     const num=(e,u,st)=>`<span class='pv'><button class='pBtn' data-act='nstep' data-e='${e}' data-d='${-(st||1)}'>\u2212</button><b>${N(e)}${u}</b><button class='pBtn' data-act='nstep' data-e='${e}' data-d='${st||1}'>+</button></span>`;
-    const sh=(col,txt,ic)=>`<div class='shead'><span class='shic' style='color:${col}'>${ic}</span>${txt}</div>`;
-    const icSun=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8'/></svg>`;
-    const icCloud=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M7 18h10a4 4 0 0 0 .8-7.9 5.5 5.5 0 0 0-10.7-1A4.5 4.5 0 0 0 7 18z'/></svg>`;
-    const icLeaf=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M5 19c0-8 5-13 14-14-1 9-6 14-14 14z'/><path d='M5 19c3-5 7-8 11-10'/></svg>`;
-    const icMoon=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z'/></svg>`;
-    const icScene=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M3 7h18M3 12h18M3 17h18'/><circle cx='7' cy='7' r='1.5' fill='currentColor'/><circle cx='14' cy='12' r='1.5' fill='currentColor'/><circle cx='10' cy='17' r='1.5' fill='currentColor'/></svg>`;
+    const srow=(lab,ctrl,hint)=>`<div class='sRow'><div class='sLab'>${lab}${hint?`<span class='sHint'>${hint}</span>`:''}</div><div class='sCtrl'>${ctrl}</div></div>`;
+    const sCard=(body)=>`<div class='sCard'>${body}</div>`;
+    const sGrp=(title)=>`<div class='sGrp'>${title}</div>`;
+    const icSun=`<svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8'/></svg>`;
+    const icCloud=`<svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M7 18h10a4 4 0 0 0 .8-7.9 5.5 5.5 0 0 0-10.7-1A4.5 4.5 0 0 0 7 18z'/></svg>`;
+    const icLeaf=`<svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M5 19c0-8 5-13 14-14-1 9-6 14-14 14z'/><path d='M5 19c3-5 7-8 11-10'/></svg>`;
+    const icMoon=`<svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z'/></svg>`;
+    const icScene=`<svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M3 7h18M3 12h18M3 17h18'/><circle cx='7' cy='7' r='1.5' fill='currentColor'/><circle cx='14' cy='12' r='1.5' fill='currentColor'/><circle cx='10' cy='17' r='1.5' fill='currentColor'/></svg>`;
+    const tab=this._setTab;
+    const menuItem=(t,col,ic,lab)=>`<div class='setMenuItem' data-act='snav' data-t='${t}'><span class='menuIc' style='color:${col}'>${ic}</span><span class='menuLab'>${lab}</span></div>`;
+    const setMenu=`<div class='setMenu'>
+      ${menuItem('sun','#ffd60a',icSun,'Ombrage automatique')}
+      ${menuItem('cloud','#6fdcff',icCloud,'Anticipation m\u00e9t\u00e9o')}
+      ${menuItem('leaf','#79e3c0',icLeaf,'Mode doux')}
+      ${menuItem('moon','#ffc35c',icMoon,'Soir et confort')}
+      ${menuItem('scenes','#6fdcff',icScene,'Sc\u00e8nes rapides')}
+    </div>`;
+    const setNav=`<div class='setNav'>
+      <span class='setBack' data-act='snav' data-t=''><span class='setBackArr'>\u2039</span> Tous les r\u00e9glages</span>
+    </div>`;
+    const sec_sun=`${sGrp('Plafonds d\u2019ombrage')}
+      ${sCard(
+        srow('S\u00e9jour : s\u2019ombrage au-dessus de',num(c.ph,'\u00b0',0.5),'Temp\u00e9rature RDC d\u00e9clenchant l\u2019ombrage')+
+        srow('S\u00e9jour : lib\u00e8re sous',num(c.pb,'\u00b0',0.5),'Hyst\u00e9r\u00e9sis : zone morte entre les deux seuils')+
+        srow('Garde-fou \u00e9tage',num(c.gf,'\u00b0',0.5),'Chambres ombr\u00e9es si l\u2019\u00e9tage d\u00e9passe cette temp\u00e9rature')
+      )}`;
+    const sec_cloud=`${sGrp('Anticipation de la chaleur')}
+      ${sCard(
+        srow('Seuil d\u2019anticipation',num(c.ant,'\u00b0',0.5),'\u00c0 9h, pr\u00e9-fermer si la pr\u00e9vision d\u00e9passe cette valeur')+
+        srow('Seuil ciel couvert',num(c.couv,'\u00a0W',10),'Sous ce rayonnement PV, le ciel est consid\u00e9r\u00e9 couvert')
+      )}`;
+    const sec_leaf=`${sGrp('D\u00e9clenchement du mode doux')}
+      ${sCard(
+        srow('Seuil PV (luminosit\u00e9 faible)',num(c.dpv,'\u00a0W',10),'Mode doux si PV liss\u00e9 sous ce seuil')+
+        srow('Seuil temp\u00e9rature',num(c.dtemp,'\u00b0',0.5),'Mode doux si la temp\u00e9rature ext est sous ce seuil')
+      )}
+      <div class='sNote'>Mode doux = volets ouverts m\u00eame en journ\u00e9e (pas besoin d\u2019ombre quand soleil faible + air frais)</div>`;
+    const sec_moon=`${sGrp('Position confort thermique')}
+      ${sCard(
+        srow('Ouverture confort',num(c.posC,'\u00a0%',5),'Position appliqu\u00e9e par le bouton Confort dans chaque volet')
+      )}`;
     const sceneEditor=this._scenes().map(s=>{const data=s.data;return `<div class='sceneBlk'>
       <div class='sceneBlkHead'>
-        <span class='sceneTit'><span class='scIc'>${data.i||'·'}</span>${data.n||'Scène '+s.i}</span>
+        <span class='sceneTit'><span class='scIc'>${data.i||'\u00b7'}</span>${data.n||'Sc\u00e8ne '+s.i}</span>
         <span class='sceneEdit' data-act='sceneRename' data-i='${s.i}'>Renommer</span>
       </div>
       ${this._rooms().map(r=>{const inc=data.p&&data.p[r.key]!=null;const pos=inc?data.p[r.key]:0;return `<div class='sceneRow'>
         <span class='sceneToggle ${inc?'on':''}' data-act='sceneTog' data-i='${s.i}' data-k='${r.key}'></span>
         <span class='sceneName'>${r.name}</span>
-        ${inc?`<span class='pv'><button class='pBtn' data-act='scenePos' data-i='${s.i}' data-k='${r.key}' data-d='-10'>−</button><b>${pos} %</b><button class='pBtn' data-act='scenePos' data-i='${s.i}' data-k='${r.key}' data-d='10'>+</button></span>`:`<span class='sceneOff'>Ignoré</span>`}
+        ${inc?`<span class='pv'><button class='pBtn' data-act='scenePos' data-i='${s.i}' data-k='${r.key}' data-d='-10'>\u2212</button><b>${pos} %</b><button class='pBtn' data-act='scenePos' data-i='${s.i}' data-k='${r.key}' data-d='10'>+</button></span>`:`<span class='sceneOff'>Ignor\u00e9</span>`}
       </div>`;}).join('')}
     </div>`;}).join('');
+    const sec_scenes=`<div class='sceneNote'>Touche la pastille pour inclure/exclure un volet de la sc\u00e8ne. Position cible \u00e9ditable avec \u00b1 (par 10\u00a0%).</div>${sceneEditor}`;
+    const secs={sun:sec_sun,cloud:sec_cloud,leaf:sec_leaf,moon:sec_moon,scenes:sec_scenes};
+    const visible=secs[tab]||'';
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
-      <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
-      ${sh('#ffd60a','Ombrage automatique',icSun)}
-      <div class='ph'>Le s\u00e9jour s'ombrage <span class='nw'>au-dessus de ${num(c.ph,'\u00b0',0.5)}</span> <span class='nw'>et lib\u00e8re sous ${num(c.pb,'\u00b0',0.5)}</span></div>
-      <div class='ph'>Garde-fou \u00e9tage : <span class='nw'>chambres ombr\u00e9es si l'\u00e9tage d\u00e9passe ${num(c.gf,'\u00b0',0.5)}</span></div>
-      ${sh('#6fdcff','Anticipation m\u00e9t\u00e9o',icCloud)}
-      <div class='ph'>\u00c0 9h, <span class='nw'>pr\u00e9-fermer si la pr\u00e9vision d\u00e9passe ${num(c.ant,'\u00b0',0.5)}</span></div>
-      <div class='ph'>Ciel consid\u00e9r\u00e9 couvert <span class='nw'>sous ${num(c.couv,'\u00a0W',10)}</span> de rayonnement</div>
-      ${sh('#79e3c0','Mode doux',icLeaf)}
-      <div class='ph'>S'active si <span class='nw'>le PV d\u00e9passe ${num(c.dpv,'\u00a0W',10)}</span> <span class='nw'>et la temp\u00e9rature ${num(c.dtemp,'\u00b0',0.5)}</span></div>
-      ${sh('var(--manual)','Soir et confort',icMoon)}
-      <div class='ph'>Position confort thermique : <span class='nw'>${num(c.posC,'\u00a0%',5)} d'ouverture</span></div>
-      ${sh('var(--cool)','Sc\u00e8nes rapides',icScene)}
-      <div class='sceneNote'>Touche la pastille pour inclure/exclure un volet de la sc\u00e8ne. Position cible \u00e9ditable avec \u00b1 (par 10\u00a0%).</div>
-      ${sceneEditor}
+      <div class='sheetHead'>${tab?'<span></span>':'<h2>R\u00e9glages</h2>'}<button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
+      ${tab?setNav:setMenu}
+      ${visible}
     </div>`;}
   _render(){if(!this._h)return;
     const c=this._c;
@@ -265,7 +292,8 @@ class VoletsGlassCard extends HTMLElement{
     if(sc)sc.addEventListener('scroll',()=>{this._scTop=sc.scrollTop;});}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
     if(act==='back'){this._nav(c.back);return;}
-    if(act==='sopen'){e.stopPropagation();this._sheet=true;this._scTop=0;this._last='';this._render();return;}
+    if(act==='sopen'){e.stopPropagation();this._sheet=true;this._setTab=null;this._scTop=0;this._last='';this._render();return;}
+    if(act==='snav'){e.stopPropagation();const nt=t.dataset.t;this._setTab=nt&&nt===this._setTab?null:(nt||null);this._scTop=0;this._last='';this._render();return;}
     if(act==='sclose'){this._sheet=false;this._last='';this._render();return;}
     if(act==='rclose'){this._open=null;this._pend={};this._last='';this._render();return;}
     if(act==='chip'){e.stopPropagation();h.callService('input_boolean','toggle',{entity_id:t.dataset.e});return;}
@@ -319,6 +347,27 @@ class VoletsGlassCard extends HTMLElement{
 .scene{flex:1 1 130px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-size:14px;font-weight:600;color:#f4f5ff;cursor:pointer;user-select:none;transition:.15s;white-space:nowrap}
 .scene:active{transform:scale(.96);background:rgba(255,255,255,.18)}
 .scIc{font-size:16px;line-height:1}
+.sGrp{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt2);margin:22px 6px 8px;opacity:.85}
+.sCard{background:rgba(255,255,255,.05);border:1px solid var(--stroke);border-radius:18px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:hidden}
+.sRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 16px;border-top:1px solid rgba(255,255,255,.06)}
+.sRow:first-child{border-top:none}
+.sLab{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;font-size:14.5px;font-weight:600;color:#f4f5ff}
+.sHint{font-size:11.5px;font-weight:500;color:var(--txt2);line-height:1.4}
+.sCtrl{flex-shrink:0}
+.sCtrl .pv{margin:0}
+.sCtrl .pv b{color:var(--cool);min-width:54px;text-align:center;font-size:15px}
+.sNote{font-size:12px;color:var(--txt2);padding:10px 6px 4px;line-height:1.5;opacity:.8;font-style:italic}
+.setNav{display:flex;align-items:center;justify-content:flex-start;padding:0 0 14px;margin:0}
+.setBack{display:inline-flex;align-items:center;gap:7px;padding:9px 18px 9px 13px;border-radius:18px;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:#f4f5ff;font-size:13.5px;font-weight:600;line-height:1;transition:.15s;user-select:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.setBack:hover{background:rgba(255,255,255,.1)}
+.setBack:active{transform:scale(.96);background:rgba(255,255,255,.14)}
+.setBackArr{font-size:18px;font-weight:400;line-height:1;color:var(--cool);margin-top:-1px}
+.setMenu{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:8px 0 6px}
+.setMenuItem{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px 14px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid var(--stroke);cursor:pointer;transition:.18s;user-select:none;min-height:128px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.setMenuItem:active{transform:scale(.97);background:rgba(255,255,255,.14)}
+.menuIc{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border:1px solid var(--stroke)}
+.menuIc svg{width:24px;height:24px}
+.menuLab{font-size:14px;font-weight:600;color:#f4f5ff;text-align:center;line-height:1.3}
 .sceneBlk{padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)}
 .sceneBlkHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:10px}
 .sceneTit{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:700;color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
