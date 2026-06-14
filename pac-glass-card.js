@@ -32,6 +32,7 @@ class PacGlassCard extends HTMLElement{
       ecsSeuilFroid:'input_number.ecs_seuil_ballon_froid',
       ecsCibleMatin:'input_number.ecs_cible_matin',
       ecsPlancher:'input_number.plancher_ecs_dynamique',
+      ecsHeater:'water_heater.alsace_domestic_hot_water_0',
       rooms:[
         {key:'rdc',name:'RDC',sub:'Plancher chauffant',climate:'climate.alsace_zone_rdc_circuit_1_climate',flow:'sensor.alsace_circuit_1_current_flow_temperature',boost:'script.lancer_boost_rdc'},
         {key:'etage',name:'Chambres',sub:'Radiateurs',climate:'climate.alsace_zone_etage_circuit_0_climate',flow:'sensor.alsace_circuit_0_current_flow_temperature',boost:'script.lancer_boost_etage'},
@@ -47,7 +48,7 @@ class PacGlassCard extends HTMLElement{
   _n(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _setp(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return(isNaN(f)||f<=0)?'\u2013':f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
-  _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag,c.ecsConsigne,c.ecsSeuilFroid,c.ecsCibleMatin,c.ecsPlancher];
+  _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag,c.ecsConsigne,c.ecsSeuilFroid,c.ecsCibleMatin,c.ecsPlancher,c.ecsHeater];
     return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.temperature!=null?st.attributes.temperature:'')+'|'+(st.attributes.current_temperature!=null?st.attributes.current_temperature:'')+'|'+(st.attributes.hvac_action||'')+'|'+(st.attributes.preset_mode||''):'x';}).join(';')+(this._open||'')+'|s:'+this._settings+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
   _heating(e){return this._a(e,'hvac_action')==='heating';}
   _veto(cl){if(this._a(cl,'preset_mode')!=='boost')return null;const e=this._a(cl,'quick_veto_end_date_time');const d=e?new Date(e):null;return{end:(d&&!isNaN(d)&&d.getFullYear()>2000)?d:null};}
@@ -91,7 +92,7 @@ class PacGlassCard extends HTMLElement{
       <div class='heroRow'>${chips.map(f=>`<div class='chip ro ${f[0]?'on h':''}'><span class='dot'></span>${f[1]}</div>`).join('')}</div>
       </div>`;}
   _sheetRoomHtml(){const c=this._c;const r=c.rooms.find(x=>x.key===this._open);if(!r)return'';
-    if(r.key==='ecs'){const boost=this._s(c.boostEcs)==='on';
+    if(r.key==='ecs'){const boost=this._s(c.boostEcs)==='on'||this._s(c.ecsHeater)==='Manual';
       return `<div class='scrim open' data-act='rclose'></div>
       <div class='sheet open'><div class='grab'></div>
         <div class='sheetHead'><h2>Eau chaude</h2><button class='close closeX' data-act='rclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
@@ -165,7 +166,16 @@ class PacGlassCard extends HTMLElement{
     if(act==='blaunch'){h.callService('script','turn_on',{entity_id:r.boost});return;}
     if(act==='vcancel'){h.callService('mypyllant','cancel_quick_veto',{entity_id:r.climate});this._last='';this._render();return;}
     if(act==='bstop'){h.callService('automation','trigger',{entity_id:c.finBoost});return;}
-    if(act==='becs'){h.callService('switch',t.dataset.v==='on'?'turn_on':'turn_off',{entity_id:c.boostEcs});return;}
+    if(act==='becs'){
+      if(t.dataset.v==='on'){
+        const consigne=parseFloat(this._s(c.ecsConsigne))||60;
+        h.callService('water_heater','set_operation_mode',{entity_id:c.ecsHeater,operation_mode:'Manual'});
+        setTimeout(()=>{h.callService('water_heater','set_temperature',{entity_id:c.ecsHeater,temperature:consigne});},2000);
+      } else {
+        h.callService('water_heater','set_operation_mode',{entity_id:c.ecsHeater,operation_mode:'Off'});
+      }
+      return;
+    }
   }
   _css(){return `:host{display:block;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;color:#f4f5ff;--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--off:rgba(255,255,255,.35);--r:26px}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
