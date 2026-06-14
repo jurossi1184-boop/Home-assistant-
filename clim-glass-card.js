@@ -351,13 +351,11 @@ class ClimGlassCard extends HTMLElement{
       ${menuItem('pow','#ffc35c',icPow,'Allumage manuel')}
       ${menuItem('win','rgba(255,255,255,.7)',icWin,'Fen\u00eatres')}
     </div>`;
-    const setNav=`<div class='setNav'>
-      <span class='setBack' data-act='snav' data-t=''><span class='setBackArr'>\u2039</span> Tous les r\u00e9glages</span>
-    </div>`;
+    const backBtn=`<span class='setBack' data-act='snav' data-t=''><span class='setBackArr'>\u2039</span> Tous les r\u00e9glages</span>`;
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
-      <div class='sheetHead'>${tab?'<span></span>':`<h2>${headTxt}</h2>`}<button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
-      ${tab?setNav:setMenu}
+      <div class='sheetHead'>${tab?backBtn:`<h2>${headTxt}</h2>`}<button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
+      ${tab?'':setMenu}
       ${tab==='snow'?`${sh('#6fdcff','Froid automatique',icSnow,'snow')}
       ${sGrp('Consignes par pi\u00e8ce')}
       ${sCard(
