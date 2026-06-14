@@ -124,8 +124,15 @@ class ClimGlassCard extends HTMLElement{
 .top{display:flex;margin-bottom:14px}
 .back{display:inline-flex;align-items:center;gap:8px;padding:10px 18px 10px 14px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);font-size:14px;font-weight:600;color:var(--txt2);cursor:pointer;user-select:none}
 .back:active{transform:scale(.96)}
-.alert{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:18px;background:rgba(255,195,92,.13);border:1px solid rgba(255,195,92,.45);color:var(--manual);font-size:14px;font-weight:600;margin-bottom:10px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
-.alert .aic{font-size:16px}
+.alert{display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--stroke);border-radius:22px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:13px 16px;margin-bottom:10px;transition:transform .15s,background .15s}
+.alert:active{transform:scale(.985)}
+.alert .ai{width:22px;height:22px;flex:none}
+.aTxt{display:flex;flex-direction:column;min-width:0;flex:1}
+.aT{font-size:15px;font-weight:700;color:#fff}
+.aS{font-size:12.5px;color:var(--txt2)}
+.aWarn .ai{color:var(--manual)}
+.aStatic{cursor:default}
+.aStatic:active{transform:none}
 .hero{position:relative;background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px}
 .gear{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid var(--stroke);color:var(--txt2);font-size:17px;cursor:pointer;user-select:none;flex-shrink:0}
 .gear:active{transform:scale(.92)}
@@ -227,7 +234,7 @@ class ClimGlassCard extends HTMLElement{
 .room{min-height:132px;padding:16px}
 .secTitle{font-size:20px;margin:6px 4px 14px}
 }`;}
-  _alertsHtml(){return this._c.windows.filter(w=>this._s(w.entity)==='on').map(w=>`<div class='alert'><span class='aic'>\u26a0\ufe0e</span>Fen\u00eatre ${w.name} ouverte \u2014 clim coup\u00e9e</div>`).join('');}
+  _alertsHtml(){const open=this._c.windows.filter(w=>this._s(w.entity)==='on').map(w=>w.name);if(!open.length)return '';const t=open.length>1?'Fen\u00eatres ouvertes':'Fen\u00eatre ouverte';const s=`Chambre${open.length>1?'s':''} ${open.join(', ')} \u2014 clim coup\u00e9e`;const winIc=`<svg class='ai' viewBox='0 0 24 24' fill='currentColor'><path d='M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-2V4H6V2zm-2 4h10v16H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z'/></svg>`;return `<div class='alert aWarn aStatic'>${winIc}<div class='aTxt'><span class='aT'>${t}</span><span class='aS'>${s}</span></div></div>`;}
   _heroSub(){const c=this._c;const act=c.rooms.filter(r=>{const s=this._s(r.climate);return s&&s!=='off';}).length;
     const offN=c.rooms.length-act;
     const actModes=[...new Set(c.rooms.map(r=>this._s(r.climate)).filter(s=>s&&s!=='off'&&s!=='unavailable'))];
