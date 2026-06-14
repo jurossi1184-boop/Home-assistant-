@@ -96,7 +96,7 @@ class AccueilGlassCard extends HTMLElement{
       const r=await this._h.callWS({type:'call_service',domain:'weather',service:'get_forecasts',service_data:{type:'daily'},target:{entity_id:this._c.meteo},return_response:true});
       const resp=r&&(r.response||r);
       const f=resp&&resp[this._c.meteo]&&resp[this._c.meteo].forecast;
-      if(f&&f.length){this._fc=f.slice(0,3);const m=this._model();this._lastStruct=this._structSig(m);this._render(m);}
+      if(f&&f.length){this._fc=f.slice(0,7);const m=this._model();this._lastStruct=this._structSig(m);this._render(m);}
     }catch(e){}
   }
   _s(e){const st=this._h&&this._h.states[e];return st?st.state:null;}
@@ -549,8 +549,9 @@ class AccueilGlassCard extends HTMLElement{
       .act.man .bi{color:var(--manual);}
       .act.cool{background:rgba(111,220,255,.16);border-color:rgba(111,220,255,.3);}
       .act.cool .bi{color:var(--cool);}
-      .fc{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-      .fcDay{background:var(--glass);border:1px solid var(--stroke);border-radius:22px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:14px 10px;min-height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;cursor:pointer;transition:transform .15s;}
+      .fc{display:flex;overflow-x:auto;gap:12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 2px 6px;margin:0 -2px;}
+      .fc::-webkit-scrollbar{display:none;}
+      .fcDay{flex:0 0 calc((100% - 24px) / 3);scroll-snap-align:start;background:var(--glass);border:1px solid var(--stroke);border-radius:22px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:14px 10px;min-height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;cursor:pointer;transition:transform .15s;}
       .fcDay:active{transform:scale(.97);}
       .eyeMeteo{cursor:pointer;}
       .veil{position:fixed;inset:0;background:rgba(8,10,18,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:9;animation:fadeIn .2s ease;}
@@ -612,7 +613,7 @@ class AccueilGlassCard extends HTMLElement{
         .chip{padding:9px 10px;}
         .grid{grid-template-columns:repeat(4,1fr);}
         .room{min-height:104px;}
-        .fcDay{min-height:96px;padding:10px 8px;gap:3px;}
+        .fcDay{flex:0 0 calc((100% - 60px) / 6);min-height:96px;padding:10px 8px;gap:3px;}
         .fci{width:26px;height:26px;}
         .fcIcPair{width:26px;height:26px;}
         .sv{width:34px;height:34px;}
