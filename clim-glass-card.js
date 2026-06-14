@@ -59,6 +59,7 @@ class ClimGlassCard extends HTMLElement{
     },c||{});
     this._open=null;
     this._settings=false;
+    this._setTab='snow';
     this._pend={};
   }
   set hass(h){this._h=h;
@@ -208,9 +209,11 @@ class ClimGlassCard extends HTMLElement{
 .manRow.manOn{background:rgba(255,195,92,.13);border-color:rgba(255,195,92,.45);color:var(--manual)}
 .shead{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--txt2);margin-top:18px;padding:0 4px 9px;scroll-margin-top:74px}
 .setNav{position:sticky;top:-16px;z-index:5;display:flex;gap:14px;justify-content:center;padding:10px 4px 12px;margin:-4px -4px 8px;background:linear-gradient(180deg,rgba(38,32,98,.96) 0%,rgba(38,32,98,.85) 70%,rgba(38,32,98,0) 100%);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-.setNavBtn{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid var(--stroke);transition:.15s;user-select:none}
-.setNavBtn:active{transform:scale(.92);background:rgba(255,255,255,.16)}
-.setNavBtn svg{width:19px;height:19px}
+.setNavBtn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid var(--stroke);transition:.18s;user-select:none}
+.setNavBtn:active{transform:scale(.92)}
+.setNavBtn svg{width:20px;height:20px}
+.setNavBtn.active{background:rgba(255,255,255,.96);border-color:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(10,20,60,.3)}
+.setNavBtn.active svg{transform:scale(1.05)}
 .shic{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .shead+.ph{border-top:none;padding-top:4px}
 .ph{padding:13px 4px;border-top:1px solid rgba(255,255,255,.1);font-size:15px;line-height:1.7;display:flex;flex-wrap:wrap;align-items:center;column-gap:6px;row-gap:8px}
@@ -316,17 +319,18 @@ class ClimGlassCard extends HTMLElement{
     const icDrop=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.5s6 6.8 6 11a6 6 0 0 1-12 0c0-4.2 6-11 6-11z'/></svg>`;
     const icPow=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M12 3.5v7'/><path d='M7.2 6.2a7 7 0 1 0 9.6 0'/></svg>`;
     const icWin=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='4' width='16' height='16' rx='2.5'/><path d='M12 4v16M4 12h16'/></svg>`;
+    const tab=this._setTab||'snow';
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
       <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close' data-act='sclose'>Fermer</button></div>
       <div class='setNav'>
-        <span class='setNavBtn' data-act='snav' data-t='snow' title='Froid automatique' style='color:#6fdcff'>${icSnow}</span>
-        <span class='setNavBtn' data-act='snav' data-t='drop' title='D\u00e9shumidification' style='color:#79e3c0'>${icDrop}</span>
-        <span class='setNavBtn' data-act='snav' data-t='pow' title='Allumage manuel' style='color:#ffc35c'>${icPow}</span>
-        <span class='setNavBtn' data-act='snav' data-t='win' title='Fen\u00eatres' style='color:rgba(255,255,255,.7)'>${icWin}</span>
+        <span class='setNavBtn ${tab==='snow'?'active':''}' data-act='snav' data-t='snow' title='Froid automatique' style='color:#6fdcff'>${icSnow}</span>
+        <span class='setNavBtn ${tab==='drop'?'active':''}' data-act='snav' data-t='drop' title='D\u00e9shumidification' style='color:#79e3c0'>${icDrop}</span>
+        <span class='setNavBtn ${tab==='pow'?'active':''}' data-act='snav' data-t='pow' title='Allumage manuel' style='color:#ffc35c'>${icPow}</span>
+        <span class='setNavBtn ${tab==='win'?'active':''}' data-act='snav' data-t='win' title='Fen\u00eatres' style='color:rgba(255,255,255,.7)'>${icWin}</span>
       </div>
       <div class='manRow ${this._s(c.vac)==='on'?'manOn':''}' data-act='chip' data-e='${c.vac}'>${this._s(c.vac)==='on'?'\ud83c\udfd6 Mode vacances ACTIF \u2014 clim suspendue, D\u00e9shu maintenu \u00b7 toucher pour d\u00e9sactiver':'\ud83c\udfd6 Mode vacances \u00b7 toucher pour suspendre la clim (D\u00e9shu et volets restent actifs)'}</div>
-      ${sh('#6fdcff','Froid automatique',icSnow,'snow')}
+      ${tab==='snow'?`${sh('#6fdcff','Froid automatique',icSnow,'snow')}
       ${room('Le salon',c.rooms[0].cons)}
       ${room('La chambre des parents',c.rooms[1].cons)}
       ${room('La chambre de Louise',c.rooms[2].cons)}
@@ -336,17 +340,17 @@ class ClimGlassCard extends HTMLElement{
       <div class='ph'>Le salon est g\u00e9r\u00e9 <span class='nw'>de ${tim(c.sDeb)}</span> <span class='nw'>\u00e0 ${tim(c.sFin)}</span>, les chambres <span class='nw'>de ${tim(c.cDeb)}</span> <span class='nw'>\u00e0 ${tim(c.cFin)}</span></div>
       <div class='ph'>\u00c0 19h, <span class='nw'>pr\u00e9-refroidir les chambres \u00e0 ${num(c.precoolT,'\u00b0')}</span></div>
       <div class='ph'>Anti va-et-vient : pas de froid auto si la PAC a chauff\u00e9 depuis moins de ${num(c.antimixH,'\u00a0h')}</div>
-      <div class='ph'>Le froid n'est autoris\u00e9 que si dehors d\u00e9passe ${num(c.seuilExt,'\u00b0')} \u2014 mesur\u00e9 ou pr\u00e9vu aujourd'hui</div>
-      ${sh('#79e3c0','D\u00e9shumidification automatique',icDrop,'drop')}
+      <div class='ph'>Le froid n'est autoris\u00e9 que si dehors d\u00e9passe ${num(c.seuilExt,'\u00b0')} \u2014 mesur\u00e9 ou pr\u00e9vu aujourd'hui</div>`:''}
+      ${tab==='drop'?`${sh('#79e3c0','D\u00e9shumidification automatique',icDrop,'drop')}
       <div class='ph'>Se lance <span class='nw'>au-dessus de ${num(c.hygroH,'\u00a0%')}</span> <span class='nw'>et s'arr\u00eate \u00e0 ${num(c.hygroB,'\u00a0%')}</span> d'humidit\u00e9 \u00e0 l'\u00e9tage</div>
       <div class='ph'>Au salon (RDC) : <span class='nw'>au-dessus de ${num(c.hygroHRdc,'\u00a0%')}</span> <span class='nw'>et s'arr\u00eate \u00e0 ${num(c.hygroBRdc,'\u00a0%')}</span></div>
       <div class='ph'>Cr\u00e9neau : <span class='nw'>d\u00e9but ${num(c.deshuDebSem,'h')} en semaine</span>, <span class='nw'>${num(c.deshuDebWe,'h')} le week-end</span> <span class='nw'>\u00b7 fin ${num(c.deshuFin,'h')}</span></div>
-      <div class='rowNote'>S\u00e9chage 10\u00a0min en ventilation \u00e0 l'arr\u00eat</div>
-      ${sh('var(--manual)','Allumage manuel',icPow,'pow')}
+      <div class='rowNote'>S\u00e9chage 10\u00a0min en ventilation \u00e0 l'arr\u00eat</div>`:''}
+      ${tab==='pow'?`${sh('var(--manual)','Allumage manuel',icPow,'pow')}
       <div class='ph'>Le chaud d\u00e9marre <span class='nw'>\u00e0 ${num(c.defChaudSalon,'\u00b0')} au salon</span> <span class='nw'>et \u00e0 ${num(c.defChaudChambres,'\u00b0')} dans les chambres</span></div>
-      <div class='ph'>Le froid d\u00e9marre <span class='nw'>\u00e0 ${num(c.defFroid,'\u00b0')}</span> dans toutes les pi\u00e8ces</div>
-      ${sh('rgba(255,255,255,.55)','Fen\u00eatres',icWin,'win')}
-      <div class='ph'>Apr\u00e8s une fen\u00eatre referm\u00e9e, <span class='nw'>la clim repart au bout de ${num(c.delai,'\u00a0s')}</span> dans le mode qu'elle avait</div>
+      <div class='ph'>Le froid d\u00e9marre <span class='nw'>\u00e0 ${num(c.defFroid,'\u00b0')}</span> dans toutes les pi\u00e8ces</div>`:''}
+      ${tab==='win'?`${sh('rgba(255,255,255,.55)','Fen\u00eatres',icWin,'win')}
+      <div class='ph'>Apr\u00e8s une fen\u00eatre referm\u00e9e, <span class='nw'>la clim repart au bout de ${num(c.delai,'\u00a0s')}</span> dans le mode qu'elle avait</div>`:''}
     </div>`;}
   _render(){
     if(!this.shadowRoot){this.attachShadow({mode:'open'});
@@ -368,7 +372,7 @@ class ClimGlassCard extends HTMLElement{
     const act=t.dataset.act;const h=this._h;const c=this._c;
     const room=k=>c.rooms.find(x=>x.key===k);
     if(act==='sopen'){this._settings=true;this._last='';this._render();return;}
-    if(act==='snav'){const id=t.dataset.t;const el=this.shadowRoot.querySelector('#sec_'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});return;}
+    if(act==='snav'){this._setTab=t.dataset.t;this._last='';this._render();return;}
     if(act==='sclose'){this._settings=false;this._last='';this._render();return;}
     if(act==='gstep'){const ge=[c.rooms[1].cons,c.rooms[2].cons,c.rooms[3].cons];const gv=ge.map(en=>parseFloat(this._s(en))||20);const st2=parseFloat(this._a(ge[0],'step'))||0.5;const mn=parseFloat(this._a(ge[0],'min'));const mx=parseFloat(this._a(ge[0],'max'));let v=Math.max(...gv)+st2*parseInt(t.dataset.d);v=Math.min(mx,Math.max(mn,v));ge.forEach(en=>h.callService('input_number','set_value',{entity_id:en,value:v}));return;}
     if(act==='tstep'){const en=t.dataset.e;const v=(this._s(en)||'00:00:00').split(':');let m=parseInt(v[0])*60+parseInt(v[1])+parseInt(t.dataset.d);m=(m+1440)%1440;const hh=String(Math.floor(m/60)).padStart(2,'0'),mm=String(m%60).padStart(2,'0');h.callService('input_datetime','set_datetime',{entity_id:en,time:hh+':'+mm+':00'});return;}
