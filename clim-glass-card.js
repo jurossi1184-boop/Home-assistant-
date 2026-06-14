@@ -117,7 +117,7 @@ class ClimGlassCard extends HTMLElement{
       heta:`${this._n(this._s(c.etage))}\u00b0`,hetah:`${this._n(this._s(c.humEtage))}\u2009%`,
       hext:`${this._n(this._s(c.ext))}\u00b0`,hsub:this._heroSub()
     };
-    c.rooms.forEach(r=>{v['rs'+r.key]=this._statusTxt(r)+(r.temp?` \u00b7 ${this._n(this._s(r.temp))}\u00b0`:'');});
+    c.rooms.forEach(r=>{const ct=this._a(r.climate,'current_temperature');v['rs'+r.key]=this._statusTxt(r)+(ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'');});
     sr.querySelectorAll('[data-p]').forEach(el=>{const k=el.getAttribute('data-p');if(v[k]!==undefined)el.textContent=v[k];});}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
   _css(){return `:host{display:block;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;color:#f4f5ff;--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--off:rgba(255,255,255,.35);--r:26px}
@@ -285,7 +285,7 @@ class ClimGlassCard extends HTMLElement{
     return `<div class='room ${on?'on':''} ${heatOn?'heat':''}' data-act='open' data-k='${r.key}'>
       <div class='rTop'><span class='ric'>${ic}</span><span class='pwr' data-act='pwr' data-k='${r.key}'><svg viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M12 3.5v7'/><path d='M7.2 6.2a7 7 0 1 0 9.6 0'/></svg></span></div>
       <div><div class='rName'>${r.name}</div>
-      <div class='rSub'><span data-p='rs${r.key}'>${this._statusTxt(r)}${r.temp?` \u00b7 ${this._n(this._s(r.temp))}\u00b0`:''}</span>${tt?` \u00b7 <span class='badgeT'>\u23f1\u2009${tt}</span>`:''}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div></div>
+      <div class='rSub'><span data-p='rs${r.key}'>${this._statusTxt(r)}${(()=>{const ct=this._a(r.climate,'current_temperature');return ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'';})()}</span>${tt?` \u00b7 <span class='badgeT'>\u23f1\u2009${tt}</span>`:''}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div></div>
     </div>`;}
   _sheetHtml(){const r=this._c.rooms.find(x=>x.key===this._open);
     if(!r)return`<div class='scrim' data-act='close'></div><div class='sheet'></div>`;
