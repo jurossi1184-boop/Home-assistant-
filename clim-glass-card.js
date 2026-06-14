@@ -81,6 +81,8 @@ class ClimGlassCard extends HTMLElement{
     if(this._s(r.manual)==='on')return null;
     if(this._s(c.vac)==='on')return 'Mode vacances \u2014 pilotage suspendu';
     if(st!=='off')return null;
+    const win=c.windows.find(w=>w.name===r.name);
+    if(win&&this._s(win.entity)==='on')return 'Fen\u00eatre ouverte \u2014 clim coup\u00e9e';
     if(this._s(c.pilotageAuto)!=='on')return 'Pilotage automatique d\u00e9sactiv\u00e9';
     if(this._s(c.ecs)==='DHW')return 'En attente \u2014 eau chaude sanitaire en cours';
     if(this._s(c.boost)==='on')return 'En attente \u2014 boost ECS en cours';
@@ -109,15 +111,17 @@ class ClimGlassCard extends HTMLElement{
   _structSig(){const c=this._c;
     const chips=[this._s(c.auto),this._s(c.pre),this._s(c.deshu)].join(',');
     const wins=c.windows.map(w=>this._s(w.entity)).join(',');
+    const ctx=[this._s(c.vac),this._s(c.ecs),this._s(c.boost),this._s(c.pilotageAuto),this._s(c.freecool),this._s(c.profil),this._s(c.cielCouvert)].join(',');
     const rooms=c.rooms.map(r=>{const st=this._s(r.climate);const tim=(r.timer&&this._s(r.timer)==='active')?'T':'';const man=this._s(r.manual)==='on'?'M':'';return st+tim+man;}).join(',');
-    return chips+'|'+wins+'|'+rooms;}
+    return chips+'|'+wins+'|'+ctx+'|'+rooms;}
   _patch(){const c=this._c,sr=this.shadowRoot;
     const v={
       hrdc:`${this._n(this._s(c.rdc))}\u00b0`,hrdch:`${this._n(this._s(c.humRdc))}\u2009%`,
       heta:`${this._n(this._s(c.etage))}\u00b0`,hetah:`${this._n(this._s(c.humEtage))}\u2009%`,
       hext:`${this._n(this._s(c.ext))}\u00b0`,hsub:this._heroSub()
     };
-    c.rooms.forEach(r=>{const ct=this._a(r.climate,'current_temperature');v['rs'+r.key]=this._statusTxt(r)+(ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'');});
+    c.rooms.forEach(r=>{const ct=this._a(r.climate,'current_temperature');v['rs'+r.key]=this._statusTxt(r)+(ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'');const w=this._why(r);v['rw'+r.key]=w||'';});
+    sr.querySelectorAll('.rWhy[data-p]').forEach(el=>{const k=el.getAttribute('data-p');if(v[k]!==undefined)el.style.display=v[k]?'block':'none';});
     sr.querySelectorAll('[data-p]').forEach(el=>{const k=el.getAttribute('data-p');if(v[k]!==undefined)el.textContent=v[k];});}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
   _css(){return `:host{display:block;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;color:#f4f5ff;--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--off:rgba(255,255,255,.35);--r:26px}
@@ -170,6 +174,18 @@ class ClimGlassCard extends HTMLElement{
 .badgeM{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--manual)}
 .room.on .badgeM{color:#b45309}
 .badgeM::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.rWhy{margin-top:6px;font-size:11.5px;font-weight:500;color:var(--txt2);line-height:1.4;opacity:.85;font-style:italic}
+.room.on .rWhy{display:none}
+.sRowTgl{cursor:pointer;transition:background .15s}
+.sRowTgl:hover{background:rgba(255,255,255,.03)}
+.sRowTgl:active{transform:scale(.99)}
+.sTgl{width:46px;height:26px;border-radius:14px;background:rgba(255,255,255,.14);position:relative;transition:.25s;display:inline-block}
+.sTgl::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}
+.sTgl.on{background:#6fdcff}
+.sTgl.on::after{left:23px}
+.aHeat .ai{color:#ff9f0a}
+.aCool .ai{color:#6fdcff}
+.aInfo .ai{color:#c084fc}
 .scrim{position:fixed;inset:0;background:rgba(10,12,40,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:.3s;z-index:998}
 .scrim.open{opacity:1;pointer-events:auto}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:999;max-width:430px;margin:0 auto;background:linear-gradient(180deg,rgba(58,52,140,.95),rgba(28,26,82,.98));border:1px solid var(--stroke);border-bottom:none;border-radius:32px 32px 0 0;backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);padding:14px 20px calc(28px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .35s cubic-bezier(.32,.72,.25,1)}
@@ -260,12 +276,33 @@ class ClimGlassCard extends HTMLElement{
 .room{min-height:132px;padding:16px}
 .secTitle{font-size:20px;margin:6px 4px 14px}
 }`;}
-  _alertsHtml(){const open=this._c.windows.filter(w=>this._s(w.entity)==='on').map(w=>w.name);if(!open.length)return '';const t=open.length>1?'Fen\u00eatres ouvertes':'Fen\u00eatre ouverte';const s=`Chambre${open.length>1?'s':''} ${open.join(', ')} \u2014 clim coup\u00e9e`;const winIc=`<svg class='ai' viewBox='0 0 24 24' fill='currentColor'><path d='M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-2V4H6V2zm-2 4h10v16H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z'/></svg>`;return `<div class='alert aWarn aStatic'>${winIc}<div class='aTxt'><span class='aT'>${t}</span><span class='aS'>${s}</span></div></div>`;}
-  _heroSub(){const c=this._c;const act=c.rooms.filter(r=>{const s=this._s(r.climate);return s&&s!=='off';}).length;
-    const offN=c.rooms.length-act;
-    const actModes=[...new Set(c.rooms.map(r=>this._s(r.climate)).filter(s=>s&&s!=='off'&&s!=='unavailable'))];
-    const verb={cool:'en froid',dry:'en d\u00e9shu',fan_only:'en ventilation',heat:'en chauffe',heat_cool:'en auto'};
-    return act===0?'Tout \u00e9teint':(act+' pi\u00e8ce'+(act>1?'s':'')+' '+(actModes.length===1?(verb[actModes[0]]||'active'+(act>1?'s':'')):'active'+(act>1?'s':''))+' \u00b7 '+offN+' \u00e9teinte'+(offN>1?'s':''));}
+  _alertsHtml(){const c=this._c;const out=[];
+    const winIc=`<svg class='ai' viewBox='0 0 24 24' fill='currentColor'><path d='M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-2V4H6V2zm-2 4h10v16H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z'/></svg>`;
+    const ecsIc=`<svg class='ai' viewBox='0 0 24 24' fill='currentColor'><path d='M12 3.5s6 6.8 6 11a6 6 0 0 1-12 0c0-4.2 6-11 6-11z'/></svg>`;
+    const vacIc=`<svg class='ai' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 22h20M3 22l3-9M21 22l-3-9M5 13l14-3M5 13l-2-6M19 10l-2-6M11 4l4 14'/></svg>`;
+    const killIc=`<svg class='ai' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><path d='M12 3v9'/><path d='M7 6.5a7 7 0 1 0 10 0'/></svg>`;
+    const timIc=`<svg class='ai' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='13' r='8'/><path d='M12 9v4l2 2M10 2h4'/></svg>`;
+    // Fenêtres ouvertes
+    const wopen=c.windows.filter(w=>this._s(w.entity)==='on').map(w=>w.name);
+    if(wopen.length){const t=wopen.length>1?'Fen\u00eatres ouvertes':'Fen\u00eatre ouverte';const s=`Chambre${wopen.length>1?'s':''} ${wopen.join(', ')} \u2014 clim coup\u00e9e`;out.push(`<div class='alert aWarn aStatic'>${winIc}<div class='aTxt'><span class='aT'>${t}</span><span class='aS'>${s}</span></div></div>`);}
+    // Mode vacances
+    if(this._s(c.vac)==='on')out.push(`<div class='alert aInfo aStatic'>${vacIc}<div class='aTxt'><span class='aT'>Mode vacances actif</span><span class='aS'>Pilotage clim suspendu \u2014 d\u00e9shu maintenue</span></div></div>`);
+    // Kill switch automatisations
+    if(this._s(c.auto)==='off'||this._s(c.pilotageAuto)==='off')out.push(`<div class='alert aWarn aStatic'>${killIc}<div class='aTxt'><span class='aT'>Pilotage automatique coup\u00e9</span><span class='aS'>Les automatisations clim sont d\u00e9sactiv\u00e9es</span></div></div>`);
+    // ECS en chauffe
+    if(this._s(c.ecs)==='DHW'||this._s(c.boost)==='on'){const subtxt=this._s(c.boost)==='on'?'Boost manuel actif \u2014 clim suspendue':'PAC en cycle ECS \u2014 clim suspendue';out.push(`<div class='alert aHeat aStatic'>${ecsIc}<div class='aTxt'><span class='aT'>Eau chaude sanitaire en cours</span><span class='aS'>${subtxt}</span></div></div>`);}
+    // Minuteurs actifs
+    const tims=c.rooms.filter(r=>r.timer&&this._s(r.timer)==='active').map(r=>{const fa=this._a(r.timer,'finishes_at');const d=fa?new Date(fa):null;const tt=(d&&!isNaN(d.getTime()))?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';return r.name+(tt?` \u00b7 ${tt}`:'');});
+    if(tims.length){const t=tims.length>1?`${tims.length} minuteurs actifs`:'Minuteur actif';out.push(`<div class='alert aCool aStatic'>${timIc}<div class='aTxt'><span class='aT'>${t}</span><span class='aS'>${tims.join(' \u00b7 ')}</span></div></div>`);}
+    return out.join('');}
+  _heroSub(){const c=this._c;
+    const counts={off:0,cool:0,dry:0,fan_only:0,heat:0,heat_cool:0};
+    c.rooms.forEach(r=>{const s=this._s(r.climate)||'off';if(s in counts)counts[s]++;else counts.off++;});
+    const lbl={cool:'froid',dry:'d\u00e9shu',fan_only:'ventil',heat:'chauffe',heat_cool:'auto'};
+    const parts=[];['cool','dry','heat','heat_cool','fan_only'].forEach(m=>{if(counts[m]>0)parts.push(counts[m]+' '+lbl[m]);});
+    if(counts.off>0)parts.push(counts.off+' \u00e9teinte'+(counts.off>1?'s':''));
+    if(counts.off===c.rooms.length)return 'Tout \u00e9teint';
+    return parts.join(' \u00b7 ');}
   _heroHtml(){const c=this._c;const actTxt=this._heroSub();
     return `<div class='hero'><div class='heroLeft'><div class='hHead'><div class='eyebrow'>Climatisation</div><span class='gear' data-act='sopen'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M4 7h9.4M18.6 7H20M4 12h3.4M12.6 12H20M4 17h11.4'/><circle cx='16' cy='7' r='2.3'/><circle cx='10' cy='12' r='2.3'/><circle cx='18' cy='17' r='2.3'/></svg></span></div>
       <div class='hStats'>
@@ -285,7 +322,7 @@ class ClimGlassCard extends HTMLElement{
     return `<div class='room ${on?'on':''} ${heatOn?'heat':''}' data-act='open' data-k='${r.key}'>
       <div class='rTop'><span class='ric'>${ic}</span><span class='pwr' data-act='pwr' data-k='${r.key}'><svg viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M12 3.5v7'/><path d='M7.2 6.2a7 7 0 1 0 9.6 0'/></svg></span></div>
       <div><div class='rName'>${r.name}</div>
-      <div class='rSub'><span data-p='rs${r.key}'>${this._statusTxt(r)}${(()=>{const ct=this._a(r.climate,'current_temperature');return ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'';})()}</span>${tt?` \u00b7 <span class='badgeT'>\u23f1\u2009${tt}</span>`:''}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div></div>
+      <div class='rSub'><span data-p='rs${r.key}'>${this._statusTxt(r)}${(()=>{const ct=this._a(r.climate,'current_temperature');return ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'';})()}</span>${tt?` \u00b7 <span class='badgeT'>\u23f1\u2009${tt}</span>`:''}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div>${(()=>{const w=this._why(r);return w?`<div class='rWhy' data-p='rw${r.key}'>${w}</div>`:`<div class='rWhy' data-p='rw${r.key}' style='display:none'></div>`;})()}</div>
     </div>`;}
   _sheetHtml(){const r=this._c.rooms.find(x=>x.key===this._open);
     if(!r)return`<div class='scrim' data-act='close'></div><div class='sheet'></div>`;
@@ -345,10 +382,13 @@ class ClimGlassCard extends HTMLElement{
     const icDrop=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.5s6 6.8 6 11a6 6 0 0 1-12 0c0-4.2 6-11 6-11z'/></svg>`;
     const icPow=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'><path d='M12 3.5v7'/><path d='M7.2 6.2a7 7 0 1 0 9.6 0'/></svg>`;
     const icWin=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='4' width='16' height='16' rx='2.5'/><path d='M12 4v16M4 12h16'/></svg>`;
+    const icMode=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>`;
+    const sToggle=(lab,en,hint)=>{const on=this._s(en)==='on';return `<div class='sRow sRowTgl' data-act='chip' data-e='${en}'><div class='sLab'>${lab}${hint?`<span class='sHint'>${hint}</span>`:''}</div><div class='sCtrl'><span class='sTgl ${on?'on':''}'></span></div></div>`;};
     const tab=this._setTab;
     const headTxt=tab?'R\u00e9glages':'R\u00e9glages';
     const menuItem=(t,col,ic,lab)=>`<div class='setMenuItem' data-act='snav' data-t='${t}'><span class='menuIc' style='color:${col}'>${ic}</span><span class='menuLab'>${lab}</span></div>`;
     const setMenu=`<div class='setMenu'>
+      ${menuItem('modes','#c084fc',icMode,'Modes globaux')}
       ${menuItem('snow','#6fdcff',icSnow,'Froid automatique')}
       ${menuItem('drop','#79e3c0',icDrop,'D\u00e9shumidification')}
       ${menuItem('pow','#ffc35c',icPow,'Allumage manuel')}
@@ -359,6 +399,23 @@ class ClimGlassCard extends HTMLElement{
     <div class='sheet open sheetScroll'><div class='grab'></div>
       <div class='sheetHead'>${tab?backBtn:`<h2>${headTxt}</h2>`}<button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       ${tab?'':setMenu}
+      ${tab==='modes'?`${sh('#c084fc','Modes globaux',icMode,'modes')}
+      ${sGrp('Pilotage g\u00e9n\u00e9ral')}
+      ${sCard(
+        sToggle('Automatisations clim',c.auto,'Kill switch ma\u00eetre des automatisations')+
+        sToggle('Pilotage auto volets/clim',c.pilotageAuto,'Coupe la coordination clim/volets')+
+        sToggle('Mode vacances',c.vac,'Suspend la clim, conserve la d\u00e9shu')
+      )}
+      ${sGrp('Modes automatiques')}
+      ${sCard(
+        sToggle('D\u00e9shu auto',c.deshu,'Hygrostat \u00e9tage + RDC')+
+        sToggle('Pr\u00e9-refroid. 19h',c.pre,'Refroidit les chambres avant la nuit (canicule)')+
+        sToggle('Freecooling nocturne',c.freecool,'A\u00e9ration naturelle au lieu de la clim')
+      )}
+      ${sGrp('D\u00e9lestage')}
+      ${sCard(
+        srow('Seuil puissance maison',num(c.seuilConso,'\u00a0W'),'La clim s\u2019arr\u00eate au-dessus de ce seuil de conso instantan\u00e9e')
+      )}`:''}
       ${tab==='snow'?`${sh('#6fdcff','Froid automatique',icSnow,'snow')}
       ${sGrp('Consignes par pi\u00e8ce')}
       ${sCard(
