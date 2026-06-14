@@ -222,9 +222,7 @@ class VoletsGlassCard extends HTMLElement{
       ${menuItem('moon','#ffc35c',icMoon,'Soir et confort')}
       ${menuItem('scenes','#6fdcff',icScene,'Sc\u00e8nes rapides')}
     </div>`;
-    const setNav=`<div class='setNav'>
-      <span class='setBack' data-act='snav' data-t=''><span class='setBackArr'>\u2039</span> Tous les r\u00e9glages</span>
-    </div>`;
+    const backBtn=`<span class='setBack' data-act='snav' data-t=''><span class='setBackArr'>\u2039</span> Tous les r\u00e9glages</span>`;
     const sec_sun=`${sGrp('Plafonds d\u2019ombrage')}
       ${sCard(
         srow('S\u00e9jour : s\u2019ombrage au-dessus de',num(c.ph,'\u00b0',0.5),'Temp\u00e9rature RDC d\u00e9clenchant l\u2019ombrage')+
@@ -262,8 +260,8 @@ class VoletsGlassCard extends HTMLElement{
     const visible=secs[tab]||'';
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
-      <div class='sheetHead'>${tab?'<span></span>':'<h2>R\u00e9glages</h2>'}<button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
-      ${tab?setNav:setMenu}
+      <div class='sheetHead'>${tab?backBtn:'<h2>R\u00e9glages</h2>'}<button class='close closeX' data-act='sclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
+      ${tab?'':setMenu}
       ${visible}
     </div>`;}
   _render(){if(!this._h)return;
