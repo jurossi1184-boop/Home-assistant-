@@ -1,6 +1,6 @@
-/* pac-glass-card v7 — glisser vers le bas pour fermer la fenêtre (swipe-to-dismiss) ; fix scroll page (ne remonte plus au clic) + hero responsive iPhone (Extérieur en ligne secondaire) ; vue Pompe à chaleur Liquid Glass — réglages MiGo · sélecteur Arrêt/Auto/Manuel (garde-fou Auto) · fixes: fp current_temperature, COP de secours bridé, anti-écritures redondantes, askAuto nettoyé, consigne ≤0 → "–", automation boost en config, CSS purgé */
+/* pac-glass-card v9 — vue Pompe à chaleur Liquid Glass — réglages MiGo · sélecteur Arrêt/Manuel · consigne optimiste (_pend) · tuile montre le mode · détection dérogation native (quick veto / preset boost) + annulation */
 class PacGlassCard extends HTMLElement{
-  constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._askAuto=null;this._last='';this._pend={};}
+  constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._last='';this._pend={};}
   setConfig(cfg){
     this._c=Object.assign({
       rdc:'climate.alsace_zone_rdc_circuit_1_climate',
@@ -42,24 +42,28 @@ class PacGlassCard extends HTMLElement{
   _a(e,a){const st=this._h&&this._h.states[e];return st?st.attributes[a]:null;}
   _n(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _setp(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return(isNaN(f)||f<=0)?'\u2013':f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
-  _circSuffix(e){const sp=this._setp(this._a(e,'temperature'));if(sp!=='\u2013')return ' \u00b7 '+sp+'\u00b0';const h=this._n(this._a(e,'current_humidity'));return h!=='\u2013'?' \u00b7 '+h+'\u2009%':'';}
   _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
   _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag];
-    return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.temperature!=null?st.attributes.temperature:'')+'|'+(st.attributes.current_temperature!=null?st.attributes.current_temperature:'')+'|'+(st.attributes.hvac_action||''):'x';}).join(';')+(this._open||'')+(this._askAuto||'')+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
+    return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.temperature!=null?st.attributes.temperature:'')+'|'+(st.attributes.current_temperature!=null?st.attributes.current_temperature:'')+'|'+(st.attributes.hvac_action||'')+'|'+(st.attributes.preset_mode||''):'x';}).join(';')+(this._open||'')+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
   _heating(e){return this._a(e,'hvac_action')==='heating';}
-  _schedEmpty(cl){const tp=this._a(cl,'time_program_heating');if(!tp)return false;return ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].every(d=>!tp[d]||tp[d].length===0);}
+  _veto(cl){if(this._a(cl,'preset_mode')!=='boost')return null;const e=this._a(cl,'quick_veto_end_date_time');const d=e?new Date(e):null;return{end:(d&&!isNaN(d)&&d.getFullYear()>2000)?d:null};}
+  _hm(d){return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
   _dhwOn(){return this._s(this._c.em)==='DHW'||this._s(this._c.boostEcs)==='on';}
   _cop(cons,prod){const a=parseFloat(this._s(cons)),b=parseFloat(this._s(prod));if(!a||!b||isNaN(a)||isNaN(b))return null;const v=b/a;return (v>0&&v<=6.5)?v.toLocaleString('fr-FR',{maximumFractionDigits:2}):null;}
   _icFloor(){return `<svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M3 19h18'/><path d='M6 15c1.5-2 1.5-4 0-6M11 15c1.5-2 1.5-4 0-6M16 15c1.5-2 1.5-4 0-6'/></svg>`;}
   _icRad(){return `<svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='6' width='16' height='12' rx='2'/><path d='M8 6v12M12 6v12M16 6v12'/></svg>`;}
   _icDrop(){return `<svg viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.5s6 6.8 6 11a6 6 0 0 1-12 0c0-4.2 6-11 6-11z'/></svg>`;}
   _tile(r){const c=this._c;
-    let on,sub,ic;
+    let on,sub,ic,badge='',pOff='';
     if(r.key==='ecs'){on=this._dhwOn();ic=this._icDrop();sub=`${this._n(this._s(c.tankT))}\u00b0 \u00b7 ${on?'chauffe vers':'consigne'} ${this._n(this._s(c.tankSet))}\u00b0`;}
-    else{on=this._heating(r.climate);ic=r.key==='rdc'?this._icFloor():this._icRad();
-      sub=`${this._n(this._a(r.climate,'current_temperature'))}\u00b0 \u00b7 ${on?'chauffe vers':'consigne'} ${this._setp(this._a(r.climate,'temperature'))}\u00b0`;}
+    else{ic=r.key==='rdc'?this._icFloor():this._icRad();
+      const md=this._s(r.climate);const cur=this._n(this._a(r.climate,'current_temperature'));const vt=this._veto(r.climate);
+      if(md==='off'){on=false;sub=`${cur}\u00b0 \u00b7 \u00e0 l\u2019arr\u00eat`;badge=`<span class='tBadge off'>Arr\u00eat</span>`;pOff='off';}
+      else if(vt){on=true;sub=`${cur}\u00b0 \u00b7 d\u00e9rogation${vt.end?` jusqu'\u00e0 ${this._hm(vt.end)}`:''}`;badge=`<span class='tBadge veto'>D\u00e9rogation</span>`;}
+      else if(md==='auto'){on=this._heating(r.climate);sub=`${cur}\u00b0 \u00b7 auto`;badge=`<span class='tBadge auto'>Auto</span>`;}
+      else{on=this._heating(r.climate);sub=`${cur}\u00b0 \u00b7 ${on?'chauffe vers':'consigne'} ${this._setp(this._a(r.climate,'temperature'))}\u00b0`;badge=`<span class='tBadge man'>Manuel</span>`;}}
     return `<div class='room ${on?'on':''}' data-act='open' data-k='${r.key}'>
-      <div class='rTop'><span class='pastille ${on?'hOn':''}'>${ic}</span></div>
+      <div class='rTop'><span class='pastille ${on?'hOn':''} ${pOff}'>${ic}</span>${badge}</div>
       <div><div class='rName'>${r.name}</div>
       <div class='rSub'>${sub}</div></div></div>`;}
   _heroHtml(){const c=this._c;
@@ -72,17 +76,11 @@ class PacGlassCard extends HTMLElement{
     else if(hE)actTxt='Chauffe en cours \u00b7 chambres \u00b7 d\u00e9part '+this._n(this._s(c.flowEtage))+'\u00b0';
     else actTxt='Tout au repos \u00b7 ballon '+this._n(this._s(c.tankT))+'\u00b0 \u00b7 '+this._n(this._s(c.pression))+'\u00a0bar';
     const chips=[[hR,'Chauffe RDC'],[hE,'Chauffe chambres'],[dhw,'Eau chaude']];
-    let pill;
-    if(dhw)pill='ECS '+this._n(this._s(c.tankT))+'\u00b0';
-    else if(hR&&hE)pill='Chauffe \u00b7 2 circuits';
-    else if(hR)pill='Chauffe RDC';
-    else if(hE)pill='Chauffe chambres';
-    else pill='Tout au repos';
     return `<div class='hero'>
-      <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Pompe \u00e0 chaleur<span class='profil'>${pill}</span></div></div>
+      <div class='heroLeft'><div class='hHead'><div class='eyebrow'>Pompe \u00e0 chaleur${cop?`<span class='profil'>COP ${cop}</span>`:''}</div></div>
       <div class='hStats'>
-        <div class='stat'><div class='sv'>${this._n(this._a(c.rdc,'current_temperature'))}\u00b0</div><div class='sl'>RDC${this._circSuffix(c.rdc)}</div></div>
-        <div class='stat'><div class='sv'>${this._n(this._a(c.etage,'current_temperature'))}\u00b0</div><div class='sl'>Chambres${this._circSuffix(c.etage)}</div></div>
+        <div class='stat'><div class='sv'>${this._n(this._a(c.rdc,'current_temperature'))}\u00b0</div><div class='sl'>RDC \u00b7 consigne ${this._setp(this._a(c.rdc,'temperature'))}\u00b0</div></div>
+        <div class='stat'><div class='sv'>${this._n(this._a(c.etage,'current_temperature'))}\u00b0</div><div class='sl'>Chambres \u00b7 consigne ${this._setp(this._a(c.etage,'temperature'))}\u00b0</div></div>
         <div class='stat out'><div class='sv'>${this._n(this._s(c.ext))}\u00b0</div><div class='sl'>Ext\u00e9rieur</div></div>
       </div>
       <div class='sub'>${actTxt}</div></div>
@@ -100,11 +98,8 @@ class PacGlassCard extends HTMLElement{
       </div>`;}
     const cl=r.climate;const boostFlag=this._s(r.key==='rdc'?c.bRdcFlag:c.bEtageFlag)==='on';
     const pd=this._pend[cl];const tgt=pd?this._setp(pd.v):this._setp(this._a(cl,'temperature'));
-    const md=this._s(cl);const asking=this._askAuto===r.key;const schedEmpty=this._schedEmpty(cl);
-    const modeBtns=[['off','Arr\u00eat'],['auto','Auto'],['heat_cool','Manuel']].map(m=>{
-      if(m[0]==='auto'&&asking)return `<button class='mode warn' data-act='autoOk' data-k='${r.key}'>\u26a0 Confirmer ?</button>`;
-      return `<button class='mode ${md===m[0]?'sel heatSel':''}' data-act='mode' data-k='${r.key}' data-m='${m[0]}'>${m[1]}</button>`;
-    }).join('');
+    const md=this._s(cl);const vt=this._veto(cl);
+    const modeBtns=[['off','Arr\u00eat'],['heat_cool','Manuel']].map(m=>`<button class='mode ${md===m[0]?'sel heatSel':''}' data-act='mode' data-k='${r.key}' data-m='${m[0]}'>${m[1]}</button>`).join('');
     let status;
     if(md==='off')status='Circuit \u00e0 l\u2019arr\u00eat';
     else if(this._heating(cl))status='Chauffe en cours \u00b7 d\u00e9part d\u2019eau '+this._n(this._s(r.flow))+'\u00b0';
@@ -114,22 +109,17 @@ class PacGlassCard extends HTMLElement{
       <div class='sheetHead'><h2>${r.name} \u00b7 ${r.sub}</h2><button class='close' data-act='rclose'>Fermer</button></div>
       <div class='dial'>
         <button class='stepBtn' data-act='step' data-k='${r.key}' data-d='-0.5'>\u2212</button>
-        <div class='target'><div class='tval heatv'>${tgt}\u00b0</div><div class='tlab'>Consigne \u00b7 pi\u00e8ce \u00e0 ${this._n(this._a(cl,'current_temperature'))}\u00b0</div></div>
+        <div class='target'><div class='tval heatv'>${tgt}\u00b0</div><div class='tlab'>Consigne du circuit</div><div class='tlab2'>Pi\u00e8ce \u00e0 ${this._n(this._a(cl,'current_temperature'))}\u00b0</div></div>
         <button class='stepBtn' data-act='step' data-k='${r.key}' data-d='0.5'>+</button>
       </div>
       <div class='modeLab'>Mode du circuit</div>
       <div class='modes'>${modeBtns}</div>
-      ${asking?`<div class='modeWarn'>Auto suit le programme horaire.${schedEmpty?' Ton programme est vide \u2014 le circuit ne chaufferait pas.':''} Confirmer le passage en Auto\u00a0?</div>`:''}
-      ${(md==='auto'&&schedEmpty&&!asking)?`<div class='modeWarn'>\u26a0 Mode Auto actif mais programme horaire vide \u2014 ce circuit ne chauffe pas. Repasse en Manuel ou configure le programme dans MiGo.</div>`:''}
       <div class='whyRow'>${status}</div>
-      ${boostFlag?`<div class='boostBadge'>BOOST EN COURS \u2014 retour au mode pr\u00e9c\u00e9dent automatique</div>`:''}
-      <div class='boostRow'>${boostFlag?`<div class='boostBtn stop' data-act='bstop'>Arr\u00eater le boost</div>`:`<div class='boostBtn' data-act='blaunch' data-k='${r.key}'>\u26a1 Lancer un boost</div>`}</div>
+      ${boostFlag?`<div class='boostBadge'>BOOST EN COURS \u2014 retour au mode pr\u00e9c\u00e9dent automatique</div>`:(vt?`<div class='boostBadge'>D\u00c9ROGATION EN COURS${vt.end?` \u00b7 jusqu'\u00e0 ${this._hm(vt.end)}`:''}</div>`:'')}
+      <div class='boostRow'>${boostFlag?`<div class='boostBtn stop' data-act='bstop'>Arr\u00eater le boost</div>`:(vt?`<div class='boostBtn stop' data-act='vcancel' data-k='${r.key}'>Annuler la d\u00e9rogation</div>`:`<div class='boostBtn' data-act='blaunch' data-k='${r.key}'>\u26a1 Lancer un boost</div>`)}</div>
     </div>`;}
-  _scroller(){let n=this;while(n){if(n.nodeType===1){const oy=getComputedStyle(n).overflowY;if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+2)return n;}let p=n.parentNode;if(!p){const r=n.getRootNode&&n.getRootNode();p=r&&r.host?r.host:null;}else if(p.nodeType===11){p=p.host||null;}n=p;}return document.scrollingElement||document.documentElement;}
-  _attachSheetSwipe(){const sheet=this.shadowRoot.querySelector('.sheet');if(!sheet)return;const scrim=this.shadowRoot.querySelector('.scrim');const grab=sheet.querySelector('.grab');if(grab&&getComputedStyle(grab).display==='none')return;const scrollEl=sheet.querySelector('.sheetScroll')||sheet;let y0=0,sc0=0,dy=0,active=false,grabbed=false;sheet.addEventListener('touchstart',ev=>{if(ev.touches.length!==1)return;y0=ev.touches[0].clientY;sc0=scrollEl.scrollTop;dy=0;active=false;grabbed=!!(grab&&(ev.target===grab||(ev.target.closest&&ev.target.closest('.sheetHead'))));sheet.style.transition='none';if(scrim)scrim.style.transition='none';},{passive:true});sheet.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)return;const d=ev.touches[0].clientY-y0;if(!active){if(d>4&&(sc0<=0||grabbed))active=true;else return;}dy=d>0?d:0;sheet.style.transform='translateY('+dy+'px)';if(scrim)scrim.style.opacity=String(Math.max(0,1-dy/400));if(ev.cancelable)ev.preventDefault();},{passive:false});const end=()=>{sheet.style.transition='';if(scrim)scrim.style.transition='';if(active&&dy>90){sheet.style.transform='translateY(100%)';if(scrim)scrim.style.opacity='0';setTimeout(()=>{this._sheet=false;this._settings=false;this._open=null;this._last='';this._render();},300);}else{sheet.style.transform='';if(scrim)scrim.style.opacity='';}active=false;dy=0;};sheet.addEventListener('touchend',end);sheet.addEventListener('touchcancel',end);}
   _render(){if(!this._h)return;
     const c=this._c;
-    const psc=this._scroller();const py=psc?psc.scrollTop:0;
     const sheets=this._open?this._sheetRoomHtml():'';
     this.shadowRoot.innerHTML=`<style>${this._css()}</style>
     <div class='wrap'>
@@ -137,20 +127,15 @@ class PacGlassCard extends HTMLElement{
       <div class='secTitle'>Circuits</div>
       <div class='grid'>${c.rooms.map(r=>this._tile(r)).join('')}</div>
     </div>${sheets}`;
-    this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});
-    if(psc&&psc.scrollTop!==py)psc.scrollTop=py;
-    this._attachSheetSwipe();}
+    this.shadowRoot.querySelectorAll('[data-act]').forEach(el=>{el.addEventListener('click',e=>this._click(e));});}
   _click(e){const t=e.currentTarget;const act=t.dataset.act;const h=this._h;const c=this._c;
-    if(act!=='mode'&&act!=='autoOk'&&this._askAuto){this._askAuto=null;this._last='';}
     if(act==='back'){this._nav(c.back);return;}
-    if(act==='rclose'){this._open=null;this._askAuto=null;this._last='';this._render();return;}
-    if(act==='open'){this._open=t.dataset.k;this._askAuto=null;this._last='';this._render();return;}
+    if(act==='rclose'){this._open=null;this._last='';this._render();return;}
+    if(act==='open'){this._open=t.dataset.k;this._last='';this._render();return;}
     const r=c.rooms.find(x=>x.key===t.dataset.k);
     if(act==='mode'){const cl=r.climate;const m=t.dataset.m;
-      if(this._s(cl)===m){this._askAuto=null;this._last='';this._render();return;}
-      if(m==='auto'){this._askAuto=r.key;this._last='';this._render();return;}
-      this._askAuto=null;h.callService('climate','set_hvac_mode',{entity_id:cl,hvac_mode:m});this._last='';this._render();return;}
-    if(act==='autoOk'){this._askAuto=null;h.callService('climate','set_hvac_mode',{entity_id:r.climate,hvac_mode:'auto'});this._last='';this._render();return;}
+      if(this._s(cl)===m)return;
+      h.callService('climate','set_hvac_mode',{entity_id:cl,hvac_mode:m});this._last='';this._render();return;}
     if(act==='step'){const cl=r.climate;const p=this._pend[cl];const cur=p?p.v:(parseFloat(this._a(cl,'temperature'))||20);
       const mn=parseFloat(this._a(cl,'min_temp')),mx=parseFloat(this._a(cl,'max_temp'));
       let nv=Math.round((cur+parseFloat(t.dataset.d))*2)/2;if(!isNaN(mn))nv=Math.max(mn,nv);if(!isNaN(mx))nv=Math.min(mx,nv);
@@ -158,6 +143,7 @@ class PacGlassCard extends HTMLElement{
       const tm=setTimeout(()=>{h.callService('climate','set_temperature',{entity_id:cl,temperature:nv});},700);
       this._pend[cl]={v:nv,ts:Date.now(),t:tm};this._last='';this._render();return;}
     if(act==='blaunch'){h.callService('script','turn_on',{entity_id:r.boost});return;}
+    if(act==='vcancel'){h.callService('mypyllant','cancel_quick_veto',{entity_id:r.climate});this._last='';this._render();return;}
     if(act==='bstop'){h.callService('automation','trigger',{entity_id:c.finBoost});return;}
     if(act==='becs'){h.callService('switch',t.dataset.v==='on'?'turn_on':'turn_off',{entity_id:c.boostEcs});return;}
   }
@@ -168,13 +154,12 @@ class PacGlassCard extends HTMLElement{
 .back{display:inline-flex;align-items:center;gap:8px;padding:10px 18px 10px 14px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);font-size:14px;font-weight:600;color:var(--txt2);cursor:pointer;user-select:none}
 .back:active{transform:scale(.96)}
 .hero{position:relative;background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px 20px 16px;margin:4px 0 18px}
-.hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;min-height:36px}
-.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600;display:flex;align-items:center;gap:10px}
-.hStats{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:0;align-items:end}
-.stat{white-space:nowrap;min-width:0}
-.stat.out{grid-column:1 / -1;margin-top:13px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);opacity:.7;display:flex;align-items:baseline;gap:9px}
-.stat.out .sv{font-size:21px;font-weight:600;line-height:1}
-.stat.out .sl{order:-1;margin-top:0}
+.hHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2);font-weight:600}
+.hStats{display:flex;gap:30px;flex-wrap:wrap;row-gap:14px}
+.stat{white-space:nowrap}
+.stat.out{padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78}
+.stat.out .sv{font-size:26px;font-weight:600;line-height:1.18}
 .sv{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 1px 12px rgba(10,20,60,.25)}
 .sl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
 .sub{margin-top:12px;font-size:14px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -205,12 +190,11 @@ class PacGlassCard extends HTMLElement{
 .target{text-align:center;min-width:110px}
 .tval{font-size:54px;font-weight:700;letter-spacing:-.03em;line-height:1;color:var(--cool)}
 .tlab{font-size:13px;color:var(--txt2);margin-top:4px}
+.tlab2{font-size:13px;color:var(--txt2);opacity:.7;margin-top:2px}
 .modes{display:flex;gap:8px;margin-bottom:14px}
 .mode{flex:1;padding:11px 4px;border-radius:16px;text-align:center;font-size:13px;font-weight:600;color:var(--txt2);background:rgba(255,255,255,.06);border:1px solid var(--stroke);cursor:pointer}
 .mode.sel.heatSel{background:rgba(255,159,10,.2);border-color:rgba(255,159,10,.55);color:#ffb340}
-.mode.warn{background:rgba(255,195,92,.2);border-color:rgba(255,195,92,.6);color:#ffce7a;font-weight:700}
 .modeLab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt2);margin:2px 4px 8px}
-.modeWarn{margin:0 0 14px;padding:10px 14px;border-radius:14px;font-size:13px;font-weight:600;text-align:center;background:rgba(255,195,92,.14);border:1px solid rgba(255,195,92,.5);color:#ffce7a;line-height:1.5}
 .tval.heatv{color:#ffb340}
 .rowNote{font-size:12px;color:var(--txt2);padding:6px 4px 4px;line-height:1.5}
 @media(min-width:700px){
@@ -224,10 +208,6 @@ class PacGlassCard extends HTMLElement{
 .hHead{margin-bottom:12px}
 .heroRow{margin-top:0;width:470px;flex-shrink:0;align-self:center}
 .sv{font-size:40px}
-.hStats{display:flex;gap:30px;align-items:flex-start}
-.stat.out{grid-column:auto;margin-top:0;padding-top:0;border-top:none;padding-left:26px;border-left:1px solid rgba(255,255,255,.22);opacity:.78;display:block}
-.stat.out .sv{font-size:26px}
-.stat.out .sl{order:0;margin-top:5px}
 .grid{grid-template-columns:repeat(4,1fr);gap:14px}
 .room{min-height:132px;padding:16px}
 .secTitle{font-size:20px;margin:6px 4px 14px}
@@ -237,6 +217,14 @@ class PacGlassCard extends HTMLElement{
 .pastille{position:relative;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.1);color:#cfe9ff;flex-shrink:0}
 .pastille.hOn{background:rgba(255,159,10,.22);color:#ffb340}
 .room.on .pastille{background:rgba(255,159,10,.16);color:#c2410c}
+.pastille.off{background:rgba(255,255,255,.06);color:var(--off)}
+.tBadge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:9px;white-space:nowrap;line-height:1.4}
+.tBadge.off{background:rgba(255,255,255,.1);color:var(--txt2);border:1px solid var(--stroke)}
+.tBadge.auto{background:rgba(111,220,255,.16);color:#9be5ff;border:1px solid rgba(111,220,255,.4)}
+.tBadge.man{background:rgba(255,159,10,.16);color:#ffb340;border:1px solid rgba(255,159,10,.4)}
+.tBadge.veto{background:rgba(255,159,10,.28);color:#ffce7a;border:1px solid rgba(255,159,10,.6)}
+.room.on .tBadge.veto{background:rgba(255,159,10,.2);color:#c2410c;border-color:transparent}
+.room.on .tBadge{background:rgba(28,28,46,.08);color:#1c1c2e;border-color:transparent}
 .profil{font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:11px;background:rgba(255,255,255,.1);border:1px solid var(--stroke);color:#f4f5ff;text-transform:none;white-space:nowrap}
 .eyebrow{display:flex;align-items:center;gap:10px}
 .chip.ro{cursor:default}
