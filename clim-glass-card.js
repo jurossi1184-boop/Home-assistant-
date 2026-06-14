@@ -345,7 +345,7 @@ class ClimGlassCard extends HTMLElement{
     const curT=extT!=null?this._n(extT):(bekoT!=null?this._n(bekoT):this._n(this._s(this._c.etage)));
     let dval,dlab,steps;
     if(heat){const pd=this._pend[r.climate];dval=this._n(pd?pd.v:this._a(r.climate,'temperature'));dlab='Temp\u00e9rature de chauffe';steps=true;}
-    else if(cool){dval=curT;dlab=man?`Refroidissement manuel \u00b7 consigne ${cons}\u00b0`:`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;steps=false;}
+    else if(cool){if(man){const pd=this._pend[r.climate];const bs=pd?pd.v:this._a(r.climate,'temperature');dval=this._n(bs!=null?bs:cons);dlab=`Refroidissement manuel \u00b7 pi\u00e8ce ${curT}\u00b0`;steps=true;}else{dval=curT;dlab=`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;steps=false;}}
     else if(st==='dry'){dval=curT;dlab=extT!=null?'D\u00e9shumidification \u00b7 sonde PAC (consigne ignor\u00e9e par le Beko)':'D\u00e9shumidification \u00b7 sonde clim (consigne ignor\u00e9e par le Beko)';steps=false;}
     else{dval=curT;const autoOn=this._s(this._c.pilotageAuto)==='on';const consNum=parseFloat(this._s(r.cons));if(autoOn&&!isNaN(consNum)&&!man)dlab=`En attente \u00b7 d\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;else dlab=extT!=null?(r.key==='salon'?'Temp\u00e9rature salon (sonde PAC)':'Temp\u00e9rature mesur\u00e9e'):(bekoT!=null?'Temp\u00e9rature de la pi\u00e8ce (sonde clim)':'Temp\u00e9rature de l\u2019\u00e9tage');steps=false;}
     const fan=this._a(r.climate,'fan_mode')||'\u2013';const swing=this._a(r.climate,'swing_mode')||'\u2013';
@@ -507,7 +507,8 @@ class ClimGlassCard extends HTMLElement{
     if(act==='timercancel'){const rr=room(t.dataset.k);if(rr&&rr.timer)h.callService('timer','cancel',{entity_id:rr.timer});return;}
     const r=room(t.dataset.k);if(!r)return;
     if(act==='step'){const d=parseFloat(t.dataset.d);
-      if(this._s(r.climate)==='heat'){const p=this._pend[r.climate];const cur=p?p.v:(parseFloat(this._a(r.climate,'temperature'))||20);const mn2=parseFloat(this._a(r.climate,'min_temp'))||16;const mx2=parseFloat(this._a(r.climate,'max_temp'))||30;const v2=Math.min(mx2,Math.max(mn2,cur+d));if(p&&p.t)clearTimeout(p.t);const tm=setTimeout(()=>{h.callService('climate','set_temperature',{entity_id:r.climate,temperature:v2});},700);this._pend[r.climate]={v:v2,ts:Date.now(),t:tm};this._last='';this._render();return;}
+      const stCur=this._s(r.climate);const manCur=this._s(r.manual)==='on';
+      if(stCur==='heat'||(stCur==='cool'&&manCur)){const p=this._pend[r.climate];const cur=p?p.v:(parseFloat(this._a(r.climate,'temperature'))||20);const mn2=parseFloat(this._a(r.climate,'min_temp'))||16;const mx2=parseFloat(this._a(r.climate,'max_temp'))||30;const v2=Math.min(mx2,Math.max(mn2,cur+d));if(p&&p.t)clearTimeout(p.t);const tm=setTimeout(()=>{h.callService('climate','set_temperature',{entity_id:r.climate,temperature:v2});},700);this._pend[r.climate]={v:v2,ts:Date.now(),t:tm};this._last='';this._render();return;}
       const v=parseFloat(this._s(r.cons))+d;
       const mn=this._a(r.cons,'min')??17,mx=this._a(r.cons,'max')??28;
       h.callService('input_number','set_value',{entity_id:r.cons,value:Math.min(mx,Math.max(mn,v))});return;}
