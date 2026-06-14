@@ -168,10 +168,9 @@ class PacGlassCard extends HTMLElement{
     if(act==='bstop'){h.callService('automation','trigger',{entity_id:c.finBoost});return;}
     if(act==='becs'){
       if(t.dataset.v==='on'){
-        const consigne=parseFloat(this._s(c.ecsConsigne))||60;
-        h.callService('water_heater','set_operation_mode',{entity_id:c.ecsHeater,operation_mode:'Manual'});
-        setTimeout(()=>{h.callService('water_heater','set_temperature',{entity_id:c.ecsHeater,temperature:consigne});},2000);
+        h.callService('script','turn_on',{entity_id:'script.ecs_boost_manuel'});
       } else {
+        h.callService('script','turn_off',{entity_id:'script.ecs_boost_manuel'});
         h.callService('water_heater','set_operation_mode',{entity_id:c.ecsHeater,operation_mode:'Off'});
       }
       return;
