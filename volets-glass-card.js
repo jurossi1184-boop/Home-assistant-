@@ -1,4 +1,4 @@
-/* volets-glass-card v4 — statut cerveau intelligent (actif/en pause avec horaire), badge soleil (sud/ouest/horizon), scènes rapides (jour/nuit/cinéma/coucher enfants), animation fluide pastille via Web Animations API. */
+/* volets-glass-card v5 — scènes éditables depuis les réglages (nom + icône emoji + inclusion/exclusion par volet + position cible). Stockage : 4 input_text JSON. Statut cerveau intelligent, badge soleil, animation pastille fluide. */
 class VoletsGlassCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:'open'});this._open=null;this._sheet=false;this._last='';this._pend={};this._tmr={};}
   setConfig(cfg){
@@ -25,6 +25,10 @@ class VoletsGlassCard extends HTMLElement{
       dpv:'input_number.volets_seuil_doux_pv',
       dtemp:'input_number.volets_seuil_doux_temp',
       posC:'input_number.volets_position_confort_thermique',
+      scene1:'input_text.volets_scene_1',
+      scene2:'input_text.volets_scene_2',
+      scene3:'input_text.volets_scene_3',
+      scene4:'input_text.volets_scene_4',
       back:'/dashboard-test/accueil',
       openThreshold:95,
       grpRdc:[
@@ -83,7 +87,10 @@ class VoletsGlassCard extends HTMLElement{
     const kids_target=coucher?0:(kids_gf?target:south_target);
     return {south_target:Math.round(south_target),west_target:Math.round(west_target),kids_target:Math.round(kids_target),open_base,antic,heat_mode,soft,couvert,sej,south_exposed,west_exposed,coucher,kids_gf,target:Math.round(target)};}
   _targetFor(r){if(!r.piloted||!r.targetType)return null;const b=this._brainVars();return b[r.targetType+'_target'];}
-  _fp(){const ids=[this._c.indice,this._c.ext,this._c.profil,this._c.prevMax,this._c.fSej,this._c.fEta,this._c.fConf,this._c.ph,this._c.pb,this._c.gf,this._c.ant,this._c.couv,this._c.dpv,this._c.dtemp,this._c.posC];
+  _scene(idx){const en=this._c['scene'+idx];if(!en)return null;const raw=this._s(en);if(!raw)return null;try{return JSON.parse(raw);}catch(_){return null;}}
+  _scenes(){return [1,2,3,4].map(i=>({i,data:this._scene(i)||{n:'Scène '+i,i:'·',p:{}}}));}
+  _sceneSave(idx,data){const en=this._c['scene'+idx];if(!en||!this._h)return;const v=JSON.stringify(data);if(v.length>255)return;this._h.callService('input_text','set_value',{entity_id:en,value:v});}
+  _fp(){const ids=[this._c.indice,this._c.ext,this._c.profil,this._c.prevMax,this._c.fSej,this._c.fEta,this._c.fConf,this._c.ph,this._c.pb,this._c.gf,this._c.ant,this._c.couv,this._c.dpv,this._c.dtemp,this._c.posC,this._c.scene1,this._c.scene2,this._c.scene3,this._c.scene4];
     ids.push(this._c.auto,this._c.cielCouvert);this._rooms().forEach(r=>{ids.push(r.cover);if(r.manual)ids.push(r.manual);});
     const sunSt=this._h&&this._h.states[this._c.sun];
     const sunFp=sunSt?(sunSt.state+'|'+Math.floor((parseFloat(sunSt.attributes.azimuth)||0)/10)+'|'+Math.floor((parseFloat(sunSt.attributes.elevation)||0))):'';
@@ -148,12 +155,7 @@ class VoletsGlassCard extends HTMLElement{
     if(az>=190&&az<=245)return '☀️ Soleil sud + ouest';
     if(az>=246&&az<360)return '🌇 Soleil sur la façade ouest';
     return '🌅 Soleil à l\'est · façades libres';}
-  _scenesHtml(){return `<div class='scenes'>
-    <div class='scene' data-act='scene' data-s='day'><span class='scIc'>☀️</span>Jour</div>
-    <div class='scene' data-act='scene' data-s='night'><span class='scIc'>🌙</span>Nuit</div>
-    <div class='scene' data-act='scene' data-s='cinema'><span class='scIc'>🎬</span>Cinéma</div>
-    <div class='scene' data-act='scene' data-s='kids'><span class='scIc'>👶</span>Coucher enfants</div>
-  </div>`;}
+  _scenesHtml(){const list=this._scenes().filter(s=>s.data.p&&Object.keys(s.data.p).length>0);if(!list.length)return '';return `<div class='scenes'>${list.map(s=>`<div class='scene' data-act='scene' data-i='${s.i}'><span class='scIc'>${s.data.i||'·'}</span>${s.data.n||('Scène '+s.i)}</div>`).join('')}</div>`;}
   _heroHtml(){const c=this._c;
     const sejF=this._s(c.fConf)==='on',etaF=this._s(c.fEta)==='on';
     const flags=[[sejF,sejF?'S\u00e9jour ombrag\u00e9':'S\u00e9jour libre'],[etaF,etaF?'\u00c9tage ombrag\u00e9':'\u00c9tage libre']];
@@ -208,6 +210,18 @@ class VoletsGlassCard extends HTMLElement{
     const icCloud=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M7 18h10a4 4 0 0 0 .8-7.9 5.5 5.5 0 0 0-10.7-1A4.5 4.5 0 0 0 7 18z'/></svg>`;
     const icLeaf=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M5 19c0-8 5-13 14-14-1 9-6 14-14 14z'/><path d='M5 19c3-5 7-8 11-10'/></svg>`;
     const icMoon=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z'/></svg>`;
+    const icScene=`<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'><path d='M3 7h18M3 12h18M3 17h18'/><circle cx='7' cy='7' r='1.5' fill='currentColor'/><circle cx='14' cy='12' r='1.5' fill='currentColor'/><circle cx='10' cy='17' r='1.5' fill='currentColor'/></svg>`;
+    const sceneEditor=this._scenes().map(s=>{const data=s.data;return `<div class='sceneBlk'>
+      <div class='sceneBlkHead'>
+        <span class='sceneTit'><span class='scIc'>${data.i||'·'}</span>${data.n||'Scène '+s.i}</span>
+        <span class='sceneEdit' data-act='sceneRename' data-i='${s.i}'>Renommer</span>
+      </div>
+      ${this._rooms().map(r=>{const inc=data.p&&data.p[r.key]!=null;const pos=inc?data.p[r.key]:0;return `<div class='sceneRow'>
+        <span class='sceneToggle ${inc?'on':''}' data-act='sceneTog' data-i='${s.i}' data-k='${r.key}'></span>
+        <span class='sceneName'>${r.name}</span>
+        ${inc?`<span class='pv'><button class='pBtn' data-act='scenePos' data-i='${s.i}' data-k='${r.key}' data-d='-10'>−</button><b>${pos} %</b><button class='pBtn' data-act='scenePos' data-i='${s.i}' data-k='${r.key}' data-d='10'>+</button></span>`:`<span class='sceneOff'>Ignoré</span>`}
+      </div>`;}).join('')}
+    </div>`;}).join('');
     return `<div class='scrim open' data-act='sclose'></div>
     <div class='sheet open sheetScroll'><div class='grab'></div>
       <div class='sheetHead'><h2>R\u00e9glages</h2><button class='close' data-act='sclose'>Fermer</button></div>
@@ -221,6 +235,9 @@ class VoletsGlassCard extends HTMLElement{
       <div class='ph'>S'active si <span class='nw'>le PV d\u00e9passe ${num(c.dpv,'\u00a0W',10)}</span> <span class='nw'>et la temp\u00e9rature ${num(c.dtemp,'\u00b0',0.5)}</span></div>
       ${sh('var(--manual)','Soir et confort',icMoon)}
       <div class='ph'>Position confort thermique : <span class='nw'>${num(c.posC,'\u00a0%',5)} d'ouverture</span></div>
+      ${sh('var(--cool)','Sc\u00e8nes rapides',icScene)}
+      <div class='sceneNote'>Touche la pastille pour inclure/exclure un volet de la sc\u00e8ne. Position cible \u00e9ditable avec \u00b1 (par 10\u00a0%).</div>
+      ${sceneEditor}
     </div>`;}
   _render(){if(!this._h)return;
     const c=this._c;
@@ -254,7 +271,10 @@ class VoletsGlassCard extends HTMLElement{
     if(act==='rclose'){this._open=null;this._pend={};this._last='';this._render();return;}
     if(act==='chip'){e.stopPropagation();h.callService('input_boolean','toggle',{entity_id:t.dataset.e});return;}
     if(act==='groupAll'){e.stopPropagation();const grp=t.dataset.g==='rdc'?c.grpRdc:c.grpEtage;const ids=grp.map(r=>r.cover);const svc=t.dataset.m==='open'?'open_cover':'close_cover';h.callService('cover',svc,{entity_id:ids});return;}
-    if(act==='scene'){e.stopPropagation();const s=t.dataset.s;const allIds=this._rooms().map(r=>r.cover);const sejourIds=c.grpRdc.map(r=>r.cover);const kidsIds=c.grpEtage.filter(r=>r.key==='louise'||r.key==='leandre').map(r=>r.cover);if(s==='day')h.callService('cover','open_cover',{entity_id:allIds});else if(s==='night')h.callService('cover','close_cover',{entity_id:allIds});else if(s==='cinema')h.callService('cover','close_cover',{entity_id:sejourIds});else if(s==='kids')h.callService('cover','close_cover',{entity_id:kidsIds});return;}
+    if(act==='scene'){e.stopPropagation();const idx=parseInt(t.dataset.i);const data=this._scene(idx);if(!data||!data.p)return;const byPos={};Object.entries(data.p).forEach(([k,pos])=>{const r=this._rooms().find(x=>x.key===k);if(!r)return;const key=String(pos);(byPos[key]=byPos[key]||[]).push(r.cover);});Object.entries(byPos).forEach(([pos,ids])=>{const p=parseInt(pos);if(p>=100)h.callService('cover','open_cover',{entity_id:ids});else if(p<=0)h.callService('cover','close_cover',{entity_id:ids});else h.callService('cover','set_cover_position',{entity_id:ids,position:p});});return;}
+    if(act==='sceneRename'){e.stopPropagation();const idx=parseInt(t.dataset.i);const data=this._scene(idx)||{n:'Scène '+idx,i:'·',p:{}};const cur=(data.i||'')+' '+(data.n||'');const v=window.prompt('Renomme la scène (commence par une icône emoji si tu veux la changer)\\nEx : "🎬 Cinéma"',cur);if(v==null)return;const trimmed=v.trim();const m=trimmed.match(/^(\p{Extended_Pictographic}(?:️)?)\s*(.*)$/u);if(m){data.i=m[1];data.n=(m[2]||'').trim()||('Scène '+idx);}else{data.n=trimmed||'Scène '+idx;}this._sceneSave(idx,data);return;}
+    if(act==='sceneTog'){e.stopPropagation();const idx=parseInt(t.dataset.i);const k=t.dataset.k;const data=this._scene(idx)||{n:'Scène '+idx,i:'·',p:{}};data.p=data.p||{};if(data.p[k]!=null)delete data.p[k];else data.p[k]=100;this._sceneSave(idx,data);return;}
+    if(act==='scenePos'){e.stopPropagation();const idx=parseInt(t.dataset.i);const k=t.dataset.k;const d=parseInt(t.dataset.d);const data=this._scene(idx)||{n:'Scène '+idx,i:'·',p:{}};data.p=data.p||{};const cur=data.p[k]!=null?data.p[k]:0;data.p[k]=Math.max(0,Math.min(100,cur+d));this._sceneSave(idx,data);return;}
     if(act==='pilot'){e.stopPropagation();const aOn=this._s(c.auto)==='on';const mans=this._rooms().filter(r=>r.manual&&this._s(r.manual)==='on').map(r=>r.manual);if(!aOn){h.callService('input_boolean','turn_on',{entity_id:c.auto});return;}if(mans.length){h.callService('input_boolean','turn_off',{entity_id:mans});return;}h.callService('input_boolean','turn_off',{entity_id:c.auto});return;}
     if(act==='goTarget'){e.stopPropagation();const rr=this._rooms().find(x=>x.key===t.dataset.k);if(!rr)return;const tgt=this._targetFor(rr);if(tgt==null)return;this._pend[rr.key]=tgt;h.callService('cover','set_cover_position',{entity_id:rr.cover,position:tgt});clearTimeout(this._tmr[rr.key]);this._tmr[rr.key]=setTimeout(()=>{delete this._pend[rr.key];this._last='';this._render();},15000);this._last='';this._render();return;}
     if(act==='open'){if(e.target.closest("[data-act='quick']"))return;this._open=t.dataset.k;this._last='';this._render();return;}
@@ -300,6 +320,18 @@ class VoletsGlassCard extends HTMLElement{
 .scene{flex:1 1 130px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:18px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-size:14px;font-weight:600;color:#f4f5ff;cursor:pointer;user-select:none;transition:.15s;white-space:nowrap}
 .scene:active{transform:scale(.96);background:rgba(255,255,255,.18)}
 .scIc{font-size:16px;line-height:1}
+.sceneBlk{padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)}
+.sceneBlkHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:10px}
+.sceneTit{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:700;color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sceneEdit{font-size:12px;font-weight:600;color:var(--cool);cursor:pointer;padding:5px 11px;border-radius:11px;background:rgba(111,220,255,.12);border:1px solid rgba(111,220,255,.35);user-select:none;white-space:nowrap}
+.sceneEdit:active{transform:scale(.95)}
+.sceneRow{display:flex;align-items:center;gap:10px;padding:7px 4px;font-size:13.5px;color:var(--txt2)}
+.sceneToggle{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid var(--stroke);cursor:pointer;flex-shrink:0;transition:.18s;position:relative}
+.sceneToggle.on{background:var(--cool);border-color:var(--cool);box-shadow:0 0 8px rgba(111,220,255,.5)}
+.sceneToggle.on::after{content:'';position:absolute;top:5px;left:6px;width:8px;height:4px;border-left:2px solid #0a2840;border-bottom:2px solid #0a2840;transform:rotate(-45deg)}
+.sceneName{flex:1;color:#f4f5ff}
+.sceneOff{color:var(--txt2);opacity:.55;font-size:12px;font-style:italic}
+.sceneNote{padding:6px 4px 10px;font-size:12px;color:var(--txt2);line-height:1.45;opacity:.85}
 .heroRow{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .chip{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 10px;border-radius:18px;font-size:14px;font-weight:600;background:rgba(255,255,255,.07);border:1px solid var(--stroke);color:var(--txt2);cursor:pointer;transition:.25s;user-select:none;white-space:nowrap}
 .chip.on{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.95);color:#0a7eb8;font-weight:700;box-shadow:0 6px 20px rgba(10,20,60,.22)}
