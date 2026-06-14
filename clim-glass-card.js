@@ -62,7 +62,7 @@ class ClimGlassCard extends HTMLElement{
     this._setTab=null;
     this._pend={};
   }
-  set hass(h){this._h=h;
+  set hass(h){this._h=h;this._initSwipe();
     for(const k in this._pend){const p=this._pend[k];const s2=h.states[k];const a=s2?parseFloat(s2.attributes.temperature):null;if(a===p.v||Date.now()-p.ts>15000)delete this._pend[k];}
     const fp=this._fp();if(fp===this._last)return;this._last=fp;
     if(this._open!==null||this._settings||!this.shadowRoot||!this.shadowRoot.querySelector('.wrap')){this._render();return;}
@@ -124,7 +124,8 @@ class ClimGlassCard extends HTMLElement{
     c.rooms.forEach(r=>{const ex=r.temp?parseFloat(this._s(r.temp)):NaN;const ct=!isNaN(ex)?ex:this._a(r.climate,'current_temperature');v['rs'+r.key]=this._statusTxt(r)+(ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'');const w=this._why(r);v['rw'+r.key]=w||'';});
     sr.querySelectorAll('.rWhy[data-p]').forEach(el=>{const k=el.getAttribute('data-p');if(v[k]!==undefined)el.style.display=v[k]?'block':'none';});
     sr.querySelectorAll('[data-p]').forEach(el=>{const k=el.getAttribute('data-p');if(v[k]!==undefined)el.textContent=v[k];});}
-  _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
+  _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));window.dispatchEvent(new CustomEvent('location-changed',{bubbles:true,composed:true}));}
+  _initSwipe(){if(this._swipeInit||!this.shadowRoot)return;this._swipeInit=true;const routes=['/dashboard-test/accueil','/dashboard-test/clim','/dashboard-test/volets-glass','/dashboard-test/pac-glass','/dashboard-test/solar-glass'];let sx=0,sy=0,vert=false,active=false;this.shadowRoot.addEventListener('touchstart',e=>{if(e.target.closest('.sheet,.scrim,.dial,.stepBtn,.room,.chip,.pBtn,input,textarea'))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;vert=false;active=true;},{passive:true});this.shadowRoot.addEventListener('touchmove',e=>{if(!active||vert)return;const dx=e.touches[0].clientX-sx;const dy=e.touches[0].clientY-sy;if(Math.abs(dy)>Math.abs(dx)+5)vert=true;},{passive:true});this.shadowRoot.addEventListener('touchend',e=>{if(!active)return;active=false;if(vert)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>80){const path=window.location.pathname;const idx=routes.findIndex(r=>path.startsWith(r));if(idx===-1)return;const next=dx<0?Math.min(idx+1,routes.length-1):Math.max(idx-1,0);if(next!==idx)this._nav(routes[next]);}},{passive:true});}
   _css(){return `:host{display:block;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;color:#f4f5ff;--glass:rgba(255,255,255,.11);--stroke:rgba(255,255,255,.16);--txt2:rgba(244,245,255,.72);--cool:#6fdcff;--manual:#ffc35c;--off:rgba(255,255,255,.35);--r:26px}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:1100px;margin:0 auto;container-type:inline-size;padding-bottom:100px}

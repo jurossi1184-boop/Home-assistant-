@@ -41,14 +41,15 @@ class PacGlassCard extends HTMLElement{
       ]
     },cfg||{});
   }
-  set hass(h){this._h=h;
+  set hass(h){this._h=h;this._initSwipe();
     for(const k in this._pend){const p=this._pend[k];const st=h.states[k];const a=st?parseFloat(st.attributes.temperature):null;if(a===p.v||Date.now()-p.ts>15000){if(p.t)clearTimeout(p.t);delete this._pend[k];}}
     const fp=this._fp();if(fp!==this._last){this._last=fp;this._render();}}
   _s(e){const st=this._h&&this._h.states[e];return st?st.state:null;}
   _a(e,a){const st=this._h&&this._h.states[e];return st?st.attributes[a]:null;}
   _n(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
   _setp(v){if(v==null||v==='unknown'||v==='unavailable')return'\u2013';const f=parseFloat(v);return(isNaN(f)||f<=0)?'\u2013':f.toLocaleString('fr-FR',{maximumFractionDigits:2});}
-  _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
+  _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));window.dispatchEvent(new CustomEvent('location-changed',{bubbles:true,composed:true}));}
+  _initSwipe(){if(this._swipeInit||!this.shadowRoot)return;this._swipeInit=true;const routes=['/dashboard-test/accueil','/dashboard-test/clim','/dashboard-test/volets-glass','/dashboard-test/pac-glass','/dashboard-test/solar-glass'];let sx=0,sy=0,vert=false,active=false;this.shadowRoot.addEventListener('touchstart',e=>{if(e.target.closest('.sheet,.scrim,.dial,.stepBtn,.room,.chip,.pBtn,.boostBtn,input,textarea'))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;vert=false;active=true;},{passive:true});this.shadowRoot.addEventListener('touchmove',e=>{if(!active||vert)return;const dx=e.touches[0].clientX-sx;const dy=e.touches[0].clientY-sy;if(Math.abs(dy)>Math.abs(dx)+5)vert=true;},{passive:true});this.shadowRoot.addEventListener('touchend',e=>{if(!active)return;active=false;if(vert)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>80){const path=window.location.pathname;const idx=routes.findIndex(r=>path.startsWith(r));if(idx===-1)return;const next=dx<0?Math.min(idx+1,routes.length-1):Math.max(idx-1,0);if(next!==idx)this._nav(routes[next]);}},{passive:true});}
   _fp(){const c=this._c;const ids=[c.rdc,c.etage,c.ext,c.tankT,c.tankSet,c.em,c.boostEcs,c.copNatif,c.pression,c.flowRdc,c.flowEtage,c.bRdcFlag,c.bEtageFlag,c.ecsConsigne,c.ecsSeuilFroid,c.ecsCibleMatin,c.ecsPlancher,c.ecsCibleBoost,c.ecsHeater];
     return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.temperature!=null?st.attributes.temperature:'')+'|'+(st.attributes.current_temperature!=null?st.attributes.current_temperature:'')+'|'+(st.attributes.hvac_action||'')+'|'+(st.attributes.preset_mode||''):'x';}).join(';')+(this._open||'')+'|s:'+this._settings+'|p:'+Object.keys(this._pend).map(k=>k+this._pend[k].v).join(',');}
   _heating(e){return this._a(e,'hvac_action')==='heating';}

@@ -45,7 +45,7 @@ class SolarGlassCard extends HTMLElement{
       ]
     },cfg||{});
   }
-  set hass(h){this._h=h;
+  set hass(h){this._h=h;this._initSwipe();
     const fp=this._fp();if(fp===this._last)return;this._last=fp;
     const sr=this.shadowRoot;
     if(this._open!==null||this._sheet||!sr||!sr.querySelector('.wrap')){this._render();return;}
@@ -54,7 +54,8 @@ class SolarGlassCard extends HTMLElement{
   _s(e){const st=this._h&&this._h.states[e];return st?st.state:null;}
   _f(e,d){const v=parseFloat(this._s(e));return isNaN(v)?(d||0):v;}
   _n(v,dec){if(v==null||v==='unknown'||v==='unavailable')return'–';const f=parseFloat(v);return isNaN(f)?v:f.toLocaleString('fr-FR',{maximumFractionDigits:dec==null?2:dec});}
-  _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
+  _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));window.dispatchEvent(new CustomEvent('location-changed',{bubbles:true,composed:true}));}
+  _initSwipe(){if(this._swipeInit||!this.shadowRoot)return;this._swipeInit=true;const routes=['/dashboard-test/accueil','/dashboard-test/clim','/dashboard-test/volets-glass','/dashboard-test/pac-glass','/dashboard-test/solar-glass'];let sx=0,sy=0,vert=false,active=false;this.shadowRoot.addEventListener('touchstart',e=>{if(e.target.closest('.sheet,.scrim,.dial,.stepBtn,.room,.chip,.pBtn,.ribbon,input,textarea'))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;vert=false;active=true;},{passive:true});this.shadowRoot.addEventListener('touchmove',e=>{if(!active||vert)return;const dx=e.touches[0].clientX-sx;const dy=e.touches[0].clientY-sy;if(Math.abs(dy)>Math.abs(dx)+5)vert=true;},{passive:true});this.shadowRoot.addEventListener('touchend',e=>{if(!active)return;active=false;if(vert)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>80){const path=window.location.pathname;const idx=routes.findIndex(r=>path.startsWith(r));if(idx===-1)return;const next=dx<0?Math.min(idx+1,routes.length-1):Math.max(idx-1,0);if(next!==idx)this._nav(routes[next]);}},{passive:true});}
   _fp(){const c=this._c;const ids=[c.pv,c.pvL,c.pv1J,c.pv2J,c.solJ,c.solM,c.solCumul,c.co2,c.soc,c.batP,c.batRest,c.batChJ,c.batDisJ,c.grid,c.gridImpJ,c.gridExpJ,c.maison,c.autoconso,c.ecoJ,c.coutJ,c.coutM,c.coutSansM,c.prevDemain,c.cielCouvert];
     return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state:'x';}).join(';')+(this._open||'')+(this._sheet?'S':'');}
   _batMode(){const p=this._f(this._c.batP);if(p>50)return'charge';if(p<-50)return'decharge';return'repos';}

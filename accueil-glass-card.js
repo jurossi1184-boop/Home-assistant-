@@ -75,7 +75,7 @@ class AccueilGlassCard extends HTMLElement{
   }
   getCardSize(){return 10;}
   set hass(h){
-    this._h=h;this._loadForecast();this._loadHourly();
+    this._h=h;this._loadForecast();this._loadHourly();this._initSwipe();
     const fp=this._fp();
     if(fp===this._last)return;
     this._last=fp;
@@ -109,6 +109,7 @@ class AccueilGlassCard extends HTMLElement{
     return cond;
   }
   _climAutoFlat(){const g=this._c.climAutomations||[];return g.reduce((acc,sec)=>acc.concat(sec.items||[]),[]);}
+  _initSwipe(){if(this._swipeInit||!this.shadowRoot)return;this._swipeInit=true;const routes=['/dashboard-test/accueil','/dashboard-test/clim','/dashboard-test/volets-glass','/dashboard-test/pac-glass','/dashboard-test/solar-glass'];let sx=0,sy=0,vert=false,active=false;this.shadowRoot.addEventListener('touchstart',e=>{if(e.target.closest('.sheet,.scrim,.dial,.stepBtn,.fc,.acts,.act,.alert,.tile,.room,.chips,.chip,.pBtn,input,textarea'))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;vert=false;active=true;},{passive:true});this.shadowRoot.addEventListener('touchmove',e=>{if(!active||vert)return;const dx=e.touches[0].clientX-sx;const dy=e.touches[0].clientY-sy;if(Math.abs(dy)>Math.abs(dx)+5)vert=true;},{passive:true});this.shadowRoot.addEventListener('touchend',e=>{if(!active){return;}active=false;if(vert)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>80){const path=window.location.pathname;const idx=routes.findIndex(r=>path.startsWith(r));if(idx===-1)return;const next=dx<0?Math.min(idx+1,routes.length-1):Math.max(idx-1,0);if(next!==idx)this._nav(routes[next]);}},{passive:true});}
   _preCoolRecommended(){
     const c=this._c;
     if(this._s(c.preCoolToggle)==='on')return null;

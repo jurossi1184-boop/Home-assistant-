@@ -44,7 +44,7 @@ class VoletsGlassCard extends HTMLElement{
       ]
     },cfg||{});
   }
-  set hass(h){this._h=h;this._reconcile();const fp=this._fp();if(fp!==this._last){this._last=fp;this._render();}}
+  set hass(h){this._h=h;this._initSwipe();this._reconcile();const fp=this._fp();if(fp!==this._last){this._last=fp;this._render();}}
   _rooms(){return [...this._c.grpRdc,...this._c.grpEtage];}
   _s(e){const st=this._h&&this._h.states[e];return st?st.state:null;}
   _a(e,a){const st=this._h&&this._h.states[e];return st?st.attributes[a]:null;}
@@ -95,7 +95,8 @@ class VoletsGlassCard extends HTMLElement{
     const sunSt=this._h&&this._h.states[this._c.sun];
     const sunFp=sunSt?(sunSt.state+'|'+Math.floor((parseFloat(sunSt.attributes.azimuth)||0)/10)+'|'+Math.floor((parseFloat(sunSt.attributes.elevation)||0))):'';
     return ids.map(e=>{const st=this._h&&this._h.states[e];return st?st.state+'|'+(st.attributes.current_position!=null?st.attributes.current_position:''):'x';}).join(';')+'|sun:'+sunFp+(this._open||'')+(this._sheet?'S':'')+JSON.stringify(this._pend);}
-  _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));}
+  _nav(p){history.pushState(null,'',p);this.dispatchEvent(new Event('location-changed',{bubbles:true,composed:true}));window.dispatchEvent(new CustomEvent('location-changed',{bubbles:true,composed:true}));}
+  _initSwipe(){if(this._swipeInit||!this.shadowRoot)return;this._swipeInit=true;const routes=['/dashboard-test/accueil','/dashboard-test/clim','/dashboard-test/volets-glass','/dashboard-test/pac-glass','/dashboard-test/solar-glass'];let sx=0,sy=0,vert=false,active=false;this.shadowRoot.addEventListener('touchstart',e=>{if(e.target.closest('.sheet,.scrim,.dial,.stepBtn,.room,.chip,.scene,.pBtn,input,textarea'))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;vert=false;active=true;},{passive:true});this.shadowRoot.addEventListener('touchmove',e=>{if(!active||vert)return;const dx=e.touches[0].clientX-sx;const dy=e.touches[0].clientY-sy;if(Math.abs(dy)>Math.abs(dx)+5)vert=true;},{passive:true});this.shadowRoot.addEventListener('touchend',e=>{if(!active)return;active=false;if(vert)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>80){const path=window.location.pathname;const idx=routes.findIndex(r=>path.startsWith(r));if(idx===-1)return;const next=dx<0?Math.min(idx+1,routes.length-1):Math.max(idx-1,0);if(next!==idx)this._nav(routes[next]);}},{passive:true});}
   _why(r){const c=this._c;
     if(r.manual&&this._s(r.manual)==='on')return 'Mode manuel \u2014 le cerveau ne touche pas ce volet';
     if(!r.piloted)return 'Volet libre \u2014 non pilot\u00e9 par le cerveau';
