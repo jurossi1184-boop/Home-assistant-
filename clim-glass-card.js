@@ -347,7 +347,7 @@ class ClimGlassCard extends HTMLElement{
     if(heat){const pd=this._pend[r.climate];dval=this._n(pd?pd.v:this._a(r.climate,'temperature'));dlab='Temp\u00e9rature de chauffe';steps=true;}
     else if(cool){dval=cons;dlab=man?'Temp\u00e9rature de refroidissement':`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0`;steps=true;}
     else if(st==='dry'){dval=curT;dlab=extT!=null?'D\u00e9shumidification \u00b7 sonde PAC (consigne ignor\u00e9e par le Beko)':'D\u00e9shumidification \u00b7 sonde clim (consigne ignor\u00e9e par le Beko)';steps=false;}
-    else{dval=curT;dlab=extT!=null?(r.key==='salon'?'Temp\u00e9rature salon (sonde PAC)':'Temp\u00e9rature mesur\u00e9e'):(bekoT!=null?'Temp\u00e9rature de la pi\u00e8ce (sonde clim)':'Temp\u00e9rature de l\u2019\u00e9tage');steps=false;}
+    else{const autoOn=this._s(this._c.pilotageAuto)==='on';const consNum=parseFloat(this._s(r.cons));if(autoOn&&!isNaN(consNum)&&!man){dval=cons;dlab=`D\u00e9marre \u00e0 ${cons}\u00b0 \u00b7 s'arr\u00eate \u00e0 ${cutv}\u00b0 (en attente)`;steps=true;}else{dval=curT;dlab=extT!=null?(r.key==='salon'?'Temp\u00e9rature salon (sonde PAC)':'Temp\u00e9rature mesur\u00e9e'):(bekoT!=null?'Temp\u00e9rature de la pi\u00e8ce (sonde clim)':'Temp\u00e9rature de l\u2019\u00e9tage');steps=false;}}
     const fan=this._a(r.climate,'fan_mode')||'\u2013';const swing=this._a(r.climate,'swing_mode')||'\u2013';
     const modes=['off','cool','heat','dry','fan_only'];
     const tt=this._tim(r);
