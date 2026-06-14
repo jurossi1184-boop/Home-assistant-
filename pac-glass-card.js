@@ -90,7 +90,7 @@ class PacGlassCard extends HTMLElement{
     if(r.key==='ecs'){const boost=this._s(c.boostEcs)==='on';
       return `<div class='scrim open' data-act='rclose'></div>
       <div class='sheet open'><div class='grab'></div>
-        <div class='sheetHead'><h2>Eau chaude</h2><button class='close' data-act='rclose'>Fermer</button></div>
+        <div class='sheetHead'><h2>Eau chaude</h2><button class='close closeX' data-act='rclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
         <div class='dial'><div class='target'><div class='tval heatv'>${this._n(this._s(c.tankT))}\u00b0</div><div class='tlab'>Ballon \u00b7 consigne ${this._n(this._s(c.tankSet))}\u00b0</div></div></div>
         ${boost?`<div class='boostBadge'>BOOST ECS EN COURS</div>`:''}
         <div class='boostRow'>${boost?`<div class='boostBtn stop' data-act='becs' data-v='off'>Arr\u00eater le boost</div>`:`<div class='boostBtn' data-act='becs' data-v='on'>\u26a1 Lancer un boost ECS</div>`}</div>
@@ -106,7 +106,7 @@ class PacGlassCard extends HTMLElement{
     else status='Au repos \u00b7 d\u00e9part d\u2019eau '+this._n(this._s(r.flow))+'\u00b0';
     return `<div class='scrim open' data-act='rclose'></div>
     <div class='sheet open'><div class='grab'></div>
-      <div class='sheetHead'><h2>${r.name} \u00b7 ${r.sub}</h2><button class='close' data-act='rclose'>Fermer</button></div>
+      <div class='sheetHead'><h2>${r.name} \u00b7 ${r.sub}</h2><button class='close closeX' data-act='rclose' title='Fermer'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 6l12 12M18 6L6 18'/></svg></button></div>
       <div class='dial'>
         <button class='stepBtn' data-act='step' data-k='${r.key}' data-d='-0.5'>\u2212</button>
         <div class='target'><div class='tval heatv'>${tgt}\u00b0</div><div class='tlab'>Consigne du circuit</div><div class='tlab2'>Pi\u00e8ce \u00e0 ${this._n(this._a(cl,'current_temperature'))}\u00b0</div></div>
@@ -185,6 +185,9 @@ class PacGlassCard extends HTMLElement{
 .sheetHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .sheetHead h2{font-size:20px;font-weight:700}
 .close{font-size:14px;color:var(--txt2);background:none;border:none;font-family:inherit;padding:6px 10px;cursor:pointer}
+.closeX{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,.08);border:1px solid var(--stroke);color:#f4f5ff;transition:.15s}
+.closeX:hover{background:rgba(255,255,255,.14)}
+.closeX:active{transform:scale(.92);background:rgba(255,255,255,.18)}
 .dial{display:flex;align-items:center;justify-content:center;gap:22px;margin:4px 0 18px}
 .stepBtn{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid var(--stroke);color:#f4f5ff;font-size:26px;font-weight:500;cursor:pointer}
 .target{text-align:center;min-width:110px}
