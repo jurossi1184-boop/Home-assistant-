@@ -73,6 +73,7 @@ class ClimGlassCard extends HTMLElement{
   _s(id){const s=this._h.states[id];return s?s.state:null;}
   _a(id,k){const s=this._h.states[id];return s?s.attributes[k]:null;}
   _n(v){const f=parseFloat(v);return isNaN(f)?'\u2013':String(Math.round(f*10)/10).replace('.',',');}
+  _ecsOn(){return this._s(this._c.ecs)==='DHW'||this._s(this._c.boost)==='on';}
   _ml(m){return({off:'Off',cool:'Froid',dry:'D\u00e9shu',fan_only:'Ventil',heat:'Chaud',heat_cool:'Auto'})[m]||m;}
   _tim(r){if(!r.timer||this._s(r.timer)!=='active')return null;
     const fa=this._a(r.timer,'finishes_at');if(!fa)return'';
@@ -174,6 +175,11 @@ class ClimGlassCard extends HTMLElement{
 .badgeM{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--manual)}
 .room.on .badgeM{color:#b45309}
 .badgeM::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.room.ecsBlocked{cursor:not-allowed;opacity:.55;background:rgba(255,159,10,.06);border-color:rgba(255,159,10,.25)}
+.room.ecsBlocked:active{transform:none}
+.room.ecsBlocked .ric{background:rgba(255,159,10,.18);color:#ff9f0a}
+.pwrBlocked{cursor:not-allowed;color:#ff5d5d!important;background:rgba(255,93,93,.12)!important;border-color:rgba(255,93,93,.4)!important}
+.pwrBlocked:active{transform:none!important}
 .rWhy{margin-top:6px;font-size:11.5px;font-weight:500;color:var(--txt2);line-height:1.4;opacity:.85;font-style:italic}
 .room.on .rWhy{display:none}
 .sRowTgl{cursor:pointer;transition:background .15s}
@@ -318,9 +324,11 @@ class ClimGlassCard extends HTMLElement{
       </div></div>`;}
   _roomHtml(r){const st=this._s(r.climate);const on=st&&st!=='off'&&st!=='unavailable';const heatOn=st==='heat';const man=this._s(r.manual)==='on';
     const tt=this._tim(r);
+    const ecsBlk=this._ecsOn();
     const ic=r.key==='salon'?"<svg viewBox='0 0 24 24' width='20' height='20' fill='currentColor'><path d='M5 9V7a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v2a3 3 0 0 0-2 2.8V12H7v-.2A3 3 0 0 0 5 9z' opacity='.55'/><path d='M2 13a2 2 0 0 1 2-2 3 3 0 0 1 3 3h10a3 3 0 0 1 3-3 2 2 0 0 1 2 2v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-.5H5v.5a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4z'/></svg>":"<svg viewBox='0 0 24 24' width='20' height='20' fill='currentColor'><path d='M3 6.5a1 1 0 0 1 2 0V11h13a3 3 0 0 1 3 3v3.5a1 1 0 0 1-2 0V16H5v1.5a1 1 0 0 1-2 0v-11z'/><circle cx='8.2' cy='9' r='1.9'/></svg>";
-    return `<div class='room ${on?'on':''} ${heatOn?'heat':''}' data-act='open' data-k='${r.key}'>
-      <div class='rTop'><span class='ric'>${ic}</span><span class='pwr' data-act='pwr' data-k='${r.key}'><svg viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M12 3.5v7'/><path d='M7.2 6.2a7 7 0 1 0 9.6 0'/></svg></span></div>
+    const pwrIc=ecsBlk?"<svg viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round'><circle cx='12' cy='12' r='8.5'/><path d='M5.5 5.5l13 13'/></svg>":"<svg viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M12 3.5v7'/><path d='M7.2 6.2a7 7 0 1 0 9.6 0'/></svg>";
+    return `<div class='room ${on?'on':''} ${heatOn?'heat':''} ${ecsBlk?'ecsBlocked':''}' data-act='open' data-k='${r.key}'>
+      <div class='rTop'><span class='ric'>${ic}</span><span class='pwr ${ecsBlk?'pwrBlocked':''}' data-act='pwr' data-k='${r.key}'>${pwrIc}</span></div>
       <div><div class='rName'>${r.name}</div>
       <div class='rSub'><span data-p='rs${r.key}'>${this._statusTxt(r)}${(()=>{const ct=this._a(r.climate,'current_temperature');return ct!=null?` \u00b7 ${this._n(ct)}\u00b0`:'';})()}</span>${tt?` \u00b7 <span class='badgeT'>\u23f1\u2009${tt}</span>`:''}${man?" \u00b7 <span class='badgeM'>Manuel</span>":''}</div>${(()=>{const w=this._why(r);return w?`<div class='rWhy' data-p='rw${r.key}'>${w}</div>`:`<div class='rWhy' data-p='rw${r.key}' style='display:none'></div>`;})()}</div>
     </div>`;}
@@ -490,9 +498,9 @@ class ClimGlassCard extends HTMLElement{
     if(act==='tstep'){const en=t.dataset.e;const v=(this._s(en)||'00:00:00').split(':');let m=parseInt(v[0])*60+parseInt(v[1])+parseInt(t.dataset.d);m=(m+1440)%1440;const hh=String(Math.floor(m/60)).padStart(2,'0'),mm=String(m%60).padStart(2,'0');h.callService('input_datetime','set_datetime',{entity_id:en,time:hh+':'+mm+':00'});return;}
     if(act==='nstep'){const en=t.dataset.e;const st=parseFloat(this._a(en,'step'))||1;const mn=parseFloat(this._a(en,'min'));const mx=parseFloat(this._a(en,'max'));const cur=parseFloat(this._s(en));const d=parseInt(t.dataset.d);let v=d>0?Math.floor(cur/st)*st+st:Math.ceil(cur/st)*st-st;v=Math.min(mx,Math.max(mn,v));v=Math.round(v*1e6)/1e6;h.callService('input_number','set_value',{entity_id:en,value:v});return;}
     if(act==='back'){this._nav(c.back);return;}
-    if(act==='open'){if(e.target.closest("[data-act='pwr']"))return;this._open=t.dataset.k;this._last='';this._render();return;}
+    if(act==='open'){if(e.target.closest("[data-act='pwr']"))return;if(this._ecsOn())return;this._open=t.dataset.k;this._last='';this._render();return;}
     if(act==='close'){this._open=null;this._last='';this._render();return;}
-    if(act==='pwr'){e.stopPropagation();const k=t.dataset.k;const r=c.rooms.find(x=>x.key===k);const st=this._s(r.climate);if(st==='off'||st===null||st==='unavailable'){this._open=k;this._last='';this._render();return;}h.callService('script',c.toggle_script,{piece:k});return;}
+    if(act==='pwr'){e.stopPropagation();if(this._ecsOn())return;const k=t.dataset.k;const r=c.rooms.find(x=>x.key===k);const st=this._s(r.climate);if(st==='off'||st===null||st==='unavailable'){this._open=k;this._last='';this._render();return;}h.callService('script',c.toggle_script,{piece:k});return;}
     if(act==='chip'){h.callService('input_boolean','toggle',{entity_id:t.dataset.e});return;}
     if(act==='timercancel'){const rr=room(t.dataset.k);if(rr&&rr.timer)h.callService('timer','cancel',{entity_id:rr.timer});return;}
     const r=room(t.dataset.k);if(!r)return;
