@@ -30,6 +30,7 @@ class AccueilGlassCard extends HTMLElement{
       fenLouise:'binary_sensor.myggbett_door_window_sensor_porte_3',
       four:'sensor.four_machine_state',
       lv:'sensor.siemens_016010396329000301_bsh_common_status_operationstate',
+      ml:'input_boolean.machine_a_laver_en_cours',
       climEntities:['climate.salon','climate.chambre_parents','climate.chambre_louise','climate.chambre_leandre'],
       climAutomations:[
         {g:'Pilotage',items:[
@@ -131,7 +132,7 @@ class AccueilGlassCard extends HTMLElement{
   _fp(){
     const c=this._c;
     const r=(e,div)=>{const v=parseFloat(this._s(e));return isNaN(v)?'?':Math.round(v/(div||1));};
-    const raw=[c.meteo,c.sun,c.volets,c.clims,c.ecs,c.away,c.auto,c.free,c.svRdc,c.svEt,c.fenParents,c.fenLeandre,c.fenLouise,c.four,c.lv,c.preCoolToggle,c.profilJournee].concat(c.climEntities).concat(c.manuelVolets).concat(c.coverEntities).concat(this._climAutoFlat().map(a=>a.e)).map(e=>this._s(e));
+    const raw=[c.meteo,c.sun,c.volets,c.clims,c.ecs,c.away,c.auto,c.free,c.svRdc,c.svEt,c.fenParents,c.fenLeandre,c.fenLouise,c.four,c.lv,c.ml,c.preCoolToggle,c.profilJournee].concat(c.climEntities).concat(c.manuelVolets).concat(c.coverEntities).concat(this._climAutoFlat().map(a=>a.e)).map(e=>this._s(e));
     const nums=[r(c.tIntRdc,0.1),r(c.tIntEtage,0.1),r(c.tExt,1),r(c.conso,20),r(c.pv,20),r(c.soc,1),r(c.batP,20),r(c.coutJ,0.01),r(c.ecsT,1)];
     return raw.join('|')+'#'+nums.join('|')+'#'+(this._fc?this._fc.map(d=>d.datetime+d.temperature).join(','):'');
   }
@@ -291,6 +292,7 @@ class AccueilGlassCard extends HTMLElement{
       drop:'M12 2S5.5 9.2 5.5 14a6.5 6.5 0 0 0 13 0C18.5 9.2 12 2 12 2z',
       stove:'M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm12 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM6 14h12v4H6v-4z',
       dish:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm0-14a6 6 0 1 0 0 12 6 6 0 0 0 0-12z',
+      washer:'M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 2v2h2V5H6zm4 0v2h2V5h-2zm2 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8z',
       check:'M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z',
       cloud:'M7 18a5 5 0 0 1 0-10h.5a7 7 0 0 1 14 2 5 5 0 0 1-4.5 8H7z'
     };
@@ -335,6 +337,7 @@ class AccueilGlassCard extends HTMLElement{
     if(fen.length)a.push({ic:'win',cl:'aWarn',t:fen.length>1?'Fenêtres ouvertes':'Fenêtre ouverte',sub:`Chambre${fen.length>1?'s':''} ${fen.join(', ')} — clim coupée`,nav:c.navClim});
     if(this._s(c.four)==='running')a.push({ic:'stove',cl:'aHeat',t:'Four en cuisson',sub:'En cours'});
     if((this._s(c.lv)||'').indexOf('OperationState.Run')>-1)a.push({ic:'dish',cl:'aCool',t:'Lave-vaisselle en cycle',sub:'En cours'});
+    if(this._s(c.ml)==='on')a.push({ic:'washer',cl:'aCool',t:'Machine à laver en cycle',sub:'En cours'});
     return a;
   }
   _model(){
